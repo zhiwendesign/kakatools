@@ -90,11 +90,13 @@ export function useResources(): UseResourcesReturn {
     );
   }, []);
 
-  const addResource = useCallback((resource: Omit<Resource, 'id'>) => {
-    const newResource: Resource = {
-      ...resource,
-      id: Date.now().toString(),
-    };
+  const addResource = useCallback((resource: Omit<Resource, 'id'> | Resource) => {
+    const newResource: Resource = 'id' in resource && resource.id 
+      ? resource as Resource
+      : {
+          ...resource,
+          id: Date.now().toString(),
+        };
     setResources((prev) => [...prev, newResource]);
   }, []);
 

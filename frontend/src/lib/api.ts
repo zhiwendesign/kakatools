@@ -159,3 +159,103 @@ export async function generatePasswordHash(
   return response.json();
 }
 
+// ==================== Resources API ====================
+
+export async function createResource(
+  token: string,
+  resource: {
+    id: string;
+    title: string;
+    description?: string;
+    category: string;
+    tags: string[];
+    imageUrl?: string;
+    link?: string;
+    featured?: boolean;
+  }
+): Promise<{ success: boolean; resource?: any; message?: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/resources`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(resource),
+  });
+  
+  return response.json();
+}
+
+export async function updateResource(
+  token: string,
+  resource: {
+    id: string;
+    title: string;
+    description?: string;
+    category: string;
+    tags: string[];
+    imageUrl?: string;
+    link?: string;
+    featured?: boolean;
+  }
+): Promise<{ success: boolean; resource?: any; message?: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/resources`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(resource),
+  });
+  
+  return response.json();
+}
+
+export async function deleteResource(
+  token: string,
+  id: string
+): Promise<{ success: boolean; message?: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/resources/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  
+  return response.json();
+}
+
+// ==================== Filters API ====================
+
+export async function addFilter(
+  token: string,
+  category: string,
+  label: string,
+  tag: string
+): Promise<{ success: boolean; filters?: any[]; message?: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/filters`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ category, label, tag }),
+  });
+  
+  return response.json();
+}
+
+export async function deleteFilter(
+  token: string,
+  category: string,
+  tag: string
+): Promise<{ success: boolean; message?: string }> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/filters/${encodeURIComponent(category)}/${encodeURIComponent(tag)}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  
+  return response.json();
+}
+

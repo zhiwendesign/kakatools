@@ -13,3 +13,6 @@ export * from './modals';
 // Home Components
 export * from './home';
 
+// Config Components
+export * from './config';
+
