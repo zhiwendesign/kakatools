@@ -112,6 +112,15 @@ const tokens = {
   verify(token) {
     return !!tokenOps.verify.get(token, Date.now());
   },
+  // 获取 token 类型（admin 或 starlight）
+  getType(token) {
+    const row = tokenOps.verify.get(token, Date.now());
+    return row ? row.type : null;
+  },
+  // 验证是否是管理员 token
+  isAdmin(token) {
+    return this.getType(token) === 'admin';
+  },
   delete(token) {
     return tokenOps.delete.run(token).changes > 0;
   },

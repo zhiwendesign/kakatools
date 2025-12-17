@@ -12,7 +12,7 @@ export default function HomePage() {
   const router = useRouter();
   
   // Auth & Access hooks
-  const { isAuthenticated, login, logout } = useAuth();
+  const { isAuthenticated, token, login, logout } = useAuth();
   const {
     hasAccess: starlightAccess,
     keyInfo: starlightKeyInfo,
@@ -20,7 +20,7 @@ export default function HomePage() {
     revokeAccess: revokeStarlightAccess,
   } = useStarlightAccess();
   
-  // Resources hook
+  // Resources hook - 传递 auth token 用于获取管理员专属分类
   const {
     resources,
     filters,
@@ -28,7 +28,7 @@ export default function HomePage() {
     error,
     getFilteredResources,
     getAvailableTags,
-  } = useResources();
+  } = useResources({ authToken: isAuthenticated ? token : null });
 
   // Header config hook
   const {

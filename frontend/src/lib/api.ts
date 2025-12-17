@@ -12,11 +12,25 @@ import {
 
 // ==================== Data Fetching ====================
 
-export async function fetchCategoryData(category: CategoryType): Promise<CategoryData> {
+// 管理员专属分类
+const ADMIN_ONLY_CATEGORIES: CategoryType[] = ['Learning'];
+
+export async function fetchCategoryData(category: CategoryType, authToken?: string | null): Promise<CategoryData> {
   const url = `${API_BASE_URL}${DATA_SOURCES[category]}`;
-  const response = await fetch(url);
+  
+  // 管理员专属分类需要带上 token
+  const headers: HeadersInit = {};
+  if (ADMIN_ONLY_CATEGORIES.includes(category) && authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+  
+  const response = await fetch(url, { headers });
   
   if (!response.ok) {
+    // 403 表示无权限，返回空数据
+    if (response.status === 403) {
+      return { filters: [], resources: [] };
+    }
     throw new Error(`Failed to fetch ${category} data`);
   }
   
@@ -24,12 +38,13 @@ export async function fetchCategoryData(category: CategoryType): Promise<Categor
 }
 
 export async function fetchAllCategoriesData(
-  categories: CategoryType[]
+  categories: CategoryType[],
+  authToken?: string | null
 ): Promise<Record<CategoryType, CategoryData>> {
   const results = await Promise.all(
     categories.map(async (category) => {
       try {
-        const data = await fetchCategoryData(category);
+        const data = await fetchCategoryData(category, authToken);
         return { category, data };
       } catch (error) {
         console.error(`Failed to load ${category}:`, error);

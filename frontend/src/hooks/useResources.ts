@@ -12,6 +12,10 @@ import {
 } from '@/types';
 import { filterResources, sortResources } from '@/lib/utils';
 
+interface UseResourcesOptions {
+  authToken?: string | null;
+}
+
 interface UseResourcesReturn {
   resources: Resource[];
   filters: FiltersMap;
@@ -36,18 +40,20 @@ interface UseResourcesReturn {
   ) => string[];
 }
 
-export function useResources(): UseResourcesReturn {
+export function useResources(options?: UseResourcesOptions): UseResourcesReturn {
+  const { authToken } = options || {};
   const [resources, setResources] = useState<Resource[]>([]);
   const [filters, setFilters] = useState<FiltersMap>(DEFAULT_FILTERS);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load data on mount
+  // Load data on mount and when auth token changes
   useEffect(() => {
     const loadData = async () => {
+      setIsLoading(true);
       try {
         const categoriesToLoad: CategoryType[] = [...CATEGORIES];
-        const data = await fetchAllCategoriesData(categoriesToLoad);
+        const data = await fetchAllCategoriesData(categoriesToLoad, authToken);
 
         const mergedResources: Resource[] = [];
         const mergedFilters: FiltersMap = { ...DEFAULT_FILTERS };
@@ -81,7 +87,7 @@ export function useResources(): UseResourcesReturn {
     };
 
     loadData();
-  }, []);
+  }, [authToken]);
 
   // Resource actions
   const updateResource = useCallback((id: string, updates: Partial<Resource>) => {

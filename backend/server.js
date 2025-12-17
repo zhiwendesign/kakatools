@@ -279,9 +279,29 @@ app.put('/api/keys/:code', requireAuth, (req, res) => {
 
 // ==================== Resources Routes ====================
 
+// 管理员专属分类列表
+const ADMIN_ONLY_CATEGORIES = ['Learning'];
+
 // Get resources by category
 app.get('/api/resources/:category', (req, res) => {
   const { category } = req.params;
+  
+  // 检查是否是管理员专属分类
+  if (ADMIN_ONLY_CATEGORIES.includes(category)) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    // 只有管理员才能访问
+    if (!token || !tokens.isAdmin(token)) {
+      return res.status(403).json({ 
+        success: false, 
+        message: '此分类仅管理员可访问',
+        filters: [],
+        resources: []
+      });
+    }
+  }
+  
   const categoryResources = resources.getByCategory(category);
   const categoryFilters = filters.getByCategory(category);
   
