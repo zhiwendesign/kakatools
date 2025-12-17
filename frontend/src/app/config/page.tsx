@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Resource, CategoryType, FiltersMap, EditorViewType } from '@/types';
 import { useAuth, useResources } from '@/hooks';
 import { Button, Icon, Input, Modal } from '@/components/ui';
-import { Header } from '@/components/layout';
+import { ConfigHeader } from '@/components/layout';
 import { TokenModal } from '@/components/modals';
 import {
   ConfigListItem,
@@ -145,18 +145,7 @@ export default function ConfigPage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background">
-        <Header
-          setActiveCategory={() => {}}
-          activeCategory="AiCC"
-          isAuthenticated={false}
-          onConfigClick={() => setShowTokenModal(true)}
-          onLogout={logout}
-          headerConfig={{ avatar: 'K', avatarImage: null, title: 'KKTools Config' }}
-          cooperationImage={null}
-          starlightAccess={false}
-          starlightKeyInfo={null}
-          onStarlightLogout={() => {}}
-        />
+        <ConfigHeader isAuthenticated={false} onLogout={logout} />
 
         <div className="container mx-auto px-4 md:px-6 py-12 animate-fade-in">
           <div className="flex flex-col items-center justify-center py-32 border border-dashed border-border rounded-2xl bg-surface-highlight/30">
@@ -184,18 +173,7 @@ export default function ConfigPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header
-        setActiveCategory={() => {}}
-        activeCategory="AiCC"
-        isAuthenticated={isAuthenticated}
-        onConfigClick={() => {}}
-        onLogout={logout}
-        headerConfig={{ avatar: 'K', avatarImage: null, title: 'KKTools Config' }}
-        cooperationImage={null}
-        starlightAccess={false}
-        starlightKeyInfo={null}
-        onStarlightLogout={() => {}}
-      />
+      <ConfigHeader isAuthenticated={isAuthenticated} onLogout={logout} />
 
       <div className="container mx-auto px-4 md:px-6 py-12 animate-fade-in">
         {/* Page Header */}

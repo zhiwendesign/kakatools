@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header, Footer } from '@/components/layout';
-import { HeroSection, ResourceGrid, AccessDenied } from '@/components/home';
+import { HeroSection, ResourceGrid } from '@/components/home';
 import { TokenModal, AccessModal } from '@/components/modals';
 import { useAuth, useStarlightAccess, useResources, useHeaderConfig } from '@/hooks';
 import { CategoryType } from '@/types';
@@ -47,10 +47,16 @@ export default function HomePage() {
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [showAccessModal, setShowAccessModal] = useState(false);
 
+  // Admin automatically has Starlight access
+  const hasStarlightAccess = isAuthenticated || starlightAccess;
+  
+  // Only show Starlight logout if user is NOT admin but HAS starlight access (logged in with key only)
+  const showStarlightLogout = !isAuthenticated && starlightAccess;
+
   // Handle category change
   const handleCategoryChange = (category: CategoryType) => {
-    // Starlight requires access key
-    if (category === 'Starlight Academy' && !starlightAccess) {
+    // Starlight requires access key (unless admin)
+    if (category === 'Starlight Academy' && !hasStarlightAccess) {
       setShowAccessModal(true);
       return;
     }
@@ -128,9 +134,6 @@ export default function HomePage() {
     setSelectedTagFilter('');
   };
 
-  // Show access denied for Learning without auth
-  const showAccessDenied = activeCategory === 'Learning' && !isAuthenticated;
-
   return (
     <div className="min-h-screen">
       <Header
@@ -141,9 +144,10 @@ export default function HomePage() {
         onLogout={handleLogout}
         headerConfig={headerConfig}
         cooperationImage={cooperationImage}
-        starlightAccess={starlightAccess}
+        starlightAccess={hasStarlightAccess}
         starlightKeyInfo={starlightKeyInfo}
         onStarlightLogout={handleStarlightLogout}
+        showStarlightLogout={showStarlightLogout}
       />
 
       {/* Access Modal for Starlight */}
@@ -173,17 +177,13 @@ export default function HomePage() {
           availableTags={availableTags}
         />
 
-        {showAccessDenied ? (
-          <AccessDenied onLogin={() => setShowTokenModal(true)} />
-        ) : (
-          <ResourceGrid
-            resources={filteredResources}
-            isLoading={isLoading}
-            error={error}
-            activeFilter={activeFilter}
-            onClearFilters={clearFilters}
-          />
-        )}
+        <ResourceGrid
+          resources={filteredResources}
+          isLoading={isLoading}
+          error={error}
+          activeFilter={activeFilter}
+          onClearFilters={clearFilters}
+        />
       </main>
 
       <Footer contactImage={contactImage} />

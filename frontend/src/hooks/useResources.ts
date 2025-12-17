@@ -111,13 +111,8 @@ export function useResources(): UseResourcesReturn {
       activeFilter: string,
       searchQuery: string,
       tagFilter: string,
-      isAuthenticated: boolean
+      _isAuthenticated: boolean // kept for API compatibility
     ): Resource[] => {
-      // Learning requires auth
-      if (category === 'Learning' && !isAuthenticated) {
-        return [];
-      }
-
       let items = resources.filter((item) => item.category === category);
 
       // Apply tag filter from dropdown

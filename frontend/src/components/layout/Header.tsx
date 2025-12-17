@@ -16,8 +16,8 @@ interface HeaderProps {
   starlightAccess: boolean;
   starlightKeyInfo: AccessKeyInfo | null;
   onStarlightLogout: () => void;
-  // Optional: for config page
-  onCategoryChange?: (category: CategoryType) => void;
+  // Only show starlight logout for non-admin users with starlight key
+  showStarlightLogout?: boolean;
 }
 
 export function Header({
@@ -31,11 +31,12 @@ export function Header({
   starlightAccess,
   starlightKeyInfo,
   onStarlightLogout,
+  showStarlightLogout = false,
 }: HeaderProps) {
-  const categories: { id: CategoryType; label: string; requiresAuth?: boolean; special?: boolean }[] = [
+  const categories: { id: CategoryType; label: string; special?: boolean }[] = [
     { id: 'AiCC', label: 'AiCC' },
     { id: 'UXLib', label: 'UXLib' },
-    { id: 'Learning', label: 'Learning', requiresAuth: true },
+    { id: 'Learning', label: 'Learning' },
     { id: 'Starlight Academy', label: 'Starlight', special: true },
   ];
 
@@ -67,41 +68,36 @@ export function Header({
         {/* Category Toggle */}
         <div className="absolute left-1/2 transform -translate-x-1/2">
           <div className="flex p-1 bg-surfaceHighlight rounded-full border border-border/50">
-            {categories.map((cat) => {
-              // Hide Learning if not authenticated
-              if (cat.requiresAuth && !isAuthenticated) return null;
-
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={cn(
-                    'px-6 py-1.5 rounded-full text-xs font-semibold transition-all duration-300',
-                    activeCategory === cat.id
-                      ? cat.special
-                        ? 'bg-purple-600 text-white shadow-md shadow-purple-200'
-                        : 'bg-white text-primary shadow-sm ring-1 ring-black/5'
-                      : 'text-secondary hover:text-primary'
-                  )}
-                >
-                  {cat.special ? (
-                    <span className="flex items-center gap-1.5">
-                      <Icon name="Sparkles" size={12} />
-                      {cat.label}
-                    </span>
-                  ) : (
-                    cat.label
-                  )}
-                </button>
-              );
-            })}
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={cn(
+                  'px-6 py-1.5 rounded-full text-xs font-semibold transition-all duration-300',
+                  activeCategory === cat.id
+                    ? cat.special
+                      ? 'bg-purple-600 text-white shadow-md shadow-purple-200'
+                      : 'bg-white text-primary shadow-sm ring-1 ring-black/5'
+                    : 'text-secondary hover:text-primary'
+                )}
+              >
+                {cat.special ? (
+                  <span className="flex items-center gap-1.5">
+                    <Icon name="Sparkles" size={12} />
+                    {cat.label}
+                  </span>
+                ) : (
+                  cat.label
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Right Actions */}
         <div className="flex items-center gap-4">
-          {/* Starlight Access Status */}
-          {starlightAccess && starlightKeyInfo && (
+          {/* Starlight Access Status - Only show for non-admin users with key */}
+          {showStarlightLogout && starlightKeyInfo && (
             <div className="relative group">
               <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 border border-purple-200 text-purple-700 text-xs font-medium hover:bg-purple-100 transition-colors">
                 <Icon name="Sparkles" size={12} />
@@ -152,16 +148,18 @@ export function Header({
             >
               <Icon name="Settings" size={18} />
             </button>
+            {/* Admin logout button */}
             {isAuthenticated && (
               <button
                 onClick={onLogout}
                 className="p-2 rounded-full hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
-                title="退出登录"
+                title="退出管理员登录"
               >
                 <Icon name="LogOut" size={18} />
               </button>
             )}
-            {starlightAccess && (
+            {/* Starlight logout button - only for non-admin users */}
+            {showStarlightLogout && (
               <button
                 onClick={onStarlightLogout}
                 className="p-2 rounded-full hover:bg-purple-50 text-purple-500 hover:text-purple-600 transition-colors"
