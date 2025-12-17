@@ -20,7 +20,7 @@ import { STORAGE_KEYS } from '@/constants';
 const CATEGORY_TABS: CategoryType[] = ['AiCC', 'UXLib', 'Learning', 'Starlight Academy'];
 
 export default function ConfigPage() {
-  const { isAuthenticated, token, login, logout } = useAuth();
+  const { isAuthenticated, token, login, logout, isLoading: authLoading } = useAuth();
   const { resources, filters, isLoading, setFilters, updateResource: localUpdateResource, addResource: localAddResource, deleteResource: localDeleteResource } = useResources();
 
   const [activeTab, setActiveTab] = useState<CategoryType>('AiCC');
@@ -140,6 +140,18 @@ export default function ConfigPage() {
       return false;
     }
   };
+
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Icon name="loader" size={32} className="animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-secondary">验证身份中...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Auth check - show login modal if not authenticated
   if (!isAuthenticated) {
