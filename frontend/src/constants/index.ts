@@ -1,7 +1,8 @@
 import { CategoryType, FiltersMap } from '@/types';
 
 // API Configuration
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4200';
+// 统一部署模式：默认使用相对路径（同域请求）
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 // Data Sources - 使用数据库 API 端点
 export const DATA_SOURCES: Record<CategoryType, string> = {
