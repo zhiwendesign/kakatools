@@ -7,10 +7,11 @@ import { login } from '@/lib/api';
 interface TokenModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (token: string) => void;
+  onSuccess?: (token: string) => void;
+  onLogin?: (password: string) => Promise<boolean>;
 }
 
-export function TokenModal({ isOpen, onClose, onSuccess }: TokenModalProps) {
+export function TokenModal({ isOpen, onClose, onSuccess, onLogin }: TokenModalProps) {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -27,13 +28,23 @@ export function TokenModal({ isOpen, onClose, onSuccess }: TokenModalProps) {
     setError('');
 
     try {
-      const data = await login(password);
-
-      if (data.success && data.token) {
-        onSuccess(data.token);
-        setPassword('');
+      // Support both onLogin (returns boolean) and onSuccess (receives token)
+      if (onLogin) {
+        const success = await onLogin(password);
+        if (success) {
+          setPassword('');
+        } else {
+          setError('密码错误，请重试');
+        }
       } else {
-        setError(data.message || '登录失败，请重试');
+        const data = await login(password);
+
+        if (data.success && data.token) {
+          onSuccess?.(data.token);
+          setPassword('');
+        } else {
+          setError(data.message || '登录失败，请重试');
+        }
       }
     } catch (error) {
       console.error('Login error:', error);

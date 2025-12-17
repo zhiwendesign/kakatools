@@ -14,7 +14,7 @@ import {
   KeyManagement,
   HeaderConfig,
 } from '@/components/config';
-import { createResource, updateResource, deleteResource, addFilter, deleteFilter } from '@/lib/api';
+import { createResource, updateResource, deleteResource, addFilter, deleteFilter, login as apiLogin } from '@/lib/api';
 import { STORAGE_KEYS } from '@/constants';
 
 const CATEGORY_TABS: CategoryType[] = ['AiCC', 'UXLib', 'Learning', 'Starlight Academy'];
@@ -126,12 +126,19 @@ export default function ConfigPage() {
   };
 
   // Handle login
-  const handleLogin = async (password: string) => {
-    const success = await login(password);
-    if (success) {
-      setShowTokenModal(false);
+  const handleLogin = async (password: string): Promise<boolean> => {
+    try {
+      const result = await apiLogin(password);
+      if (result.success && result.token) {
+        login(result.token);
+        setShowTokenModal(false);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return success;
   };
 
   // Auth check - show login modal if not authenticated
@@ -139,11 +146,16 @@ export default function ConfigPage() {
     return (
       <div className="min-h-screen bg-background">
         <Header
-          onCategoryChange={() => {}}
+          setActiveCategory={() => {}}
           activeCategory="AiCC"
           isAuthenticated={false}
           onConfigClick={() => setShowTokenModal(true)}
           onLogout={logout}
+          headerConfig={{ avatar: 'K', avatarImage: null, title: 'KKTools Config' }}
+          cooperationImage={null}
+          starlightAccess={false}
+          starlightKeyInfo={null}
+          onStarlightLogout={() => {}}
         />
 
         <div className="container mx-auto px-4 md:px-6 py-12 animate-fade-in">
@@ -173,11 +185,16 @@ export default function ConfigPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header
-        onCategoryChange={() => {}}
+        setActiveCategory={() => {}}
         activeCategory="AiCC"
         isAuthenticated={isAuthenticated}
         onConfigClick={() => {}}
         onLogout={logout}
+        headerConfig={{ avatar: 'K', avatarImage: null, title: 'KKTools Config' }}
+        cooperationImage={null}
+        starlightAccess={false}
+        starlightKeyInfo={null}
+        onStarlightLogout={() => {}}
       />
 
       <div className="container mx-auto px-4 md:px-6 py-12 animate-fade-in">

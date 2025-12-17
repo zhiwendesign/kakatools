@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Header, Footer } from '@/components/layout';
 import { HeroSection, ResourceGrid, AccessDenied } from '@/components/home';
 import { TokenModal, AccessModal } from '@/components/modals';
@@ -8,6 +9,8 @@ import { useAuth, useStarlightAccess, useResources, useHeaderConfig } from '@/ho
 import { CategoryType } from '@/types';
 
 export default function HomePage() {
+  const router = useRouter();
+  
   // Auth & Access hooks
   const { isAuthenticated, login, logout } = useAuth();
   const {
@@ -35,7 +38,6 @@ export default function HomePage() {
   } = useHeaderConfig();
 
   // UI State
-  const [view, setView] = useState<'home' | 'config'>('home');
   const [activeCategory, setActiveCategory] = useState<CategoryType>('AiCC');
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,7 +91,16 @@ export default function HomePage() {
   const handleTokenSuccess = (token: string) => {
     login(token);
     setShowTokenModal(false);
-    setView('config');
+    router.push('/config');
+  };
+
+  // Handle config click
+  const handleConfigClick = () => {
+    if (isAuthenticated) {
+      router.push('/config');
+    } else {
+      setShowTokenModal(true);
+    }
   };
 
   // Handle starlight access
@@ -108,7 +119,6 @@ export default function HomePage() {
   // Handle logout
   const handleLogout = async () => {
     await logout();
-    setView('home');
   };
 
   // Clear all filters
@@ -126,10 +136,8 @@ export default function HomePage() {
       <Header
         activeCategory={activeCategory}
         setActiveCategory={handleCategoryChange}
-        currentPage={view}
-        onChangePage={setView}
         isAuthenticated={isAuthenticated}
-        onTokenRequired={() => setShowTokenModal(true)}
+        onConfigClick={handleConfigClick}
         onLogout={handleLogout}
         headerConfig={headerConfig}
         cooperationImage={cooperationImage}
@@ -152,46 +160,31 @@ export default function HomePage() {
         onSuccess={handleTokenSuccess}
       />
 
-      {view === 'home' ? (
-        <main className="container mx-auto px-4 md:px-6 py-12 animate-fade-in">
-          <HeroSection
-            activeCategory={activeCategory}
-            activeFilter={activeFilter}
-            setActiveFilter={setActiveFilter}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedTagFilter={selectedTagFilter}
-            setSelectedTagFilter={setSelectedTagFilter}
-            filters={filters}
-            availableTags={availableTags}
-          />
+      <main className="container mx-auto px-4 md:px-6 py-12 animate-fade-in">
+        <HeroSection
+          activeCategory={activeCategory}
+          activeFilter={activeFilter}
+          setActiveFilter={setActiveFilter}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedTagFilter={selectedTagFilter}
+          setSelectedTagFilter={setSelectedTagFilter}
+          filters={filters}
+          availableTags={availableTags}
+        />
 
-          {showAccessDenied ? (
-            <AccessDenied onLogin={() => setShowTokenModal(true)} />
-          ) : (
-            <ResourceGrid
-              resources={filteredResources}
-              isLoading={isLoading}
-              error={error}
-              activeFilter={activeFilter}
-              onClearFilters={clearFilters}
-            />
-          )}
-        </main>
-      ) : (
-        <main className="container mx-auto px-4 md:px-6 py-12 animate-fade-in">
-          <div className="text-center py-20">
-            <h2 className="text-2xl font-bold text-primary mb-4">配置页面</h2>
-            <p className="text-secondary mb-4">配置功能正在开发中...</p>
-            <button
-              onClick={() => setView('home')}
-              className="px-4 py-2 bg-primary text-white rounded-lg"
-            >
-              返回首页
-            </button>
-          </div>
-        </main>
-      )}
+        {showAccessDenied ? (
+          <AccessDenied onLogin={() => setShowTokenModal(true)} />
+        ) : (
+          <ResourceGrid
+            resources={filteredResources}
+            isLoading={isLoading}
+            error={error}
+            activeFilter={activeFilter}
+            onClearFilters={clearFilters}
+          />
+        )}
+      </main>
 
       <Footer contactImage={contactImage} />
     </div>

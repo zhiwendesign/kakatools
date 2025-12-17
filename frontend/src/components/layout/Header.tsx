@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Icon } from '@/components/ui';
 import { CategoryType, HeaderConfig, AccessKeyInfo } from '@/types';
 import { cn, formatDateTime } from '@/lib/utils';
@@ -7,25 +8,23 @@ import { cn, formatDateTime } from '@/lib/utils';
 interface HeaderProps {
   activeCategory: CategoryType;
   setActiveCategory: (category: CategoryType) => void;
-  currentPage: 'home' | 'config';
-  onChangePage: (page: 'home' | 'config') => void;
   isAuthenticated: boolean;
-  onTokenRequired: () => void;
+  onConfigClick: () => void;
   onLogout: () => void;
   headerConfig: HeaderConfig;
   cooperationImage: string | null;
   starlightAccess: boolean;
   starlightKeyInfo: AccessKeyInfo | null;
   onStarlightLogout: () => void;
+  // Optional: for config page
+  onCategoryChange?: (category: CategoryType) => void;
 }
 
 export function Header({
   activeCategory,
   setActiveCategory,
-  currentPage,
-  onChangePage,
   isAuthenticated,
-  onTokenRequired,
+  onConfigClick,
   onLogout,
   headerConfig,
   cooperationImage,
@@ -44,10 +43,7 @@ export function Header({
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-border">
       <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <div
-          className="flex items-center gap-3 cursor-pointer"
-          onClick={() => onChangePage('home')}
-        >
+        <Link href="/" className="flex items-center gap-3 cursor-pointer">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-black/10 overflow-hidden">
             {headerConfig.avatarImage ? (
               <img
@@ -66,43 +62,41 @@ export function Header({
               {headerConfig.title}
             </h1>
           </div>
-        </div>
+        </Link>
 
-        {/* Category Toggle (Only show on home) */}
-        {currentPage === 'home' && (
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <div className="flex p-1 bg-surfaceHighlight rounded-full border border-border/50">
-              {categories.map((cat) => {
-                // Hide Learning if not authenticated
-                if (cat.requiresAuth && !isAuthenticated) return null;
+        {/* Category Toggle */}
+        <div className="absolute left-1/2 transform -translate-x-1/2">
+          <div className="flex p-1 bg-surfaceHighlight rounded-full border border-border/50">
+            {categories.map((cat) => {
+              // Hide Learning if not authenticated
+              if (cat.requiresAuth && !isAuthenticated) return null;
 
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setActiveCategory(cat.id)}
-                    className={cn(
-                      'px-6 py-1.5 rounded-full text-xs font-semibold transition-all duration-300',
-                      activeCategory === cat.id
-                        ? cat.special
-                          ? 'bg-purple-600 text-white shadow-md shadow-purple-200'
-                          : 'bg-white text-primary shadow-sm ring-1 ring-black/5'
-                        : 'text-secondary hover:text-primary'
-                    )}
-                  >
-                    {cat.special ? (
-                      <span className="flex items-center gap-1.5">
-                        <Icon name="Sparkles" size={12} />
-                        {cat.label}
-                      </span>
-                    ) : (
-                      cat.label
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={cn(
+                    'px-6 py-1.5 rounded-full text-xs font-semibold transition-all duration-300',
+                    activeCategory === cat.id
+                      ? cat.special
+                        ? 'bg-purple-600 text-white shadow-md shadow-purple-200'
+                        : 'bg-white text-primary shadow-sm ring-1 ring-black/5'
+                      : 'text-secondary hover:text-primary'
+                  )}
+                >
+                  {cat.special ? (
+                    <span className="flex items-center gap-1.5">
+                      <Icon name="Sparkles" size={12} />
+                      {cat.label}
+                    </span>
+                  ) : (
+                    cat.label
+                  )}
+                </button>
+              );
+            })}
           </div>
-        )}
+        </div>
 
         {/* Right Actions */}
         <div className="flex items-center gap-4">
@@ -150,44 +144,33 @@ export function Header({
             </div>
           )}
 
-          {currentPage === 'home' ? (
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onConfigClick}
+              className="p-2 rounded-full hover:bg-surfaceHighlight text-secondary hover:text-primary transition-colors"
+              title="配置"
+            >
+              <Icon name="Settings" size={18} />
+            </button>
+            {isAuthenticated && (
               <button
-                onClick={() => (isAuthenticated ? onChangePage('config') : onTokenRequired())}
-                className="p-2 rounded-full hover:bg-surfaceHighlight text-secondary hover:text-primary transition-colors"
-                title="配置"
+                onClick={onLogout}
+                className="p-2 rounded-full hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
+                title="退出登录"
               >
-                <Icon name="Settings" size={18} />
+                <Icon name="LogOut" size={18} />
               </button>
-              {starlightAccess && (
-                <button
-                  onClick={onStarlightLogout}
-                  className="p-2 rounded-full hover:bg-red-50 text-red-500 hover:text-red-600 transition-colors"
-                  title="退出Starlight访问"
-                >
-                  <Icon name="LogOut" size={18} />
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              {isAuthenticated && (
-                <button
-                  onClick={onLogout}
-                  className="text-xs font-medium text-red-500 hover:text-red-600 underline underline-offset-4"
-                  title="退出登录"
-                >
-                  退出登录
-                </button>
-              )}
+            )}
+            {starlightAccess && (
               <button
-                onClick={() => onChangePage('home')}
-                className="text-xs font-medium text-secondary hover:text-primary underline underline-offset-4"
+                onClick={onStarlightLogout}
+                className="p-2 rounded-full hover:bg-purple-50 text-purple-500 hover:text-purple-600 transition-colors"
+                title="退出Starlight访问"
               >
-                返回资源库
+                <Icon name="LogOut" size={18} />
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </header>
@@ -195,4 +178,3 @@ export function Header({
 }
 
 export default Header;
-
