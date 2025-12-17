@@ -4,6 +4,7 @@ require('dotenv').config();
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const path = require('path');
+const fs = require('fs');
 const bcrypt = require('bcrypt');
 
 // Import database operations
@@ -11,10 +12,16 @@ const { tokens, accessKeys, resources, filters } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 4200;
+const FRONTEND_DEV_PORT = process.env.FRONTEND_DEV_PORT || 3000;
+const IS_DEV = process.env.NODE_ENV !== 'production';
 
-// Middleware
+// 检测是否有前端静态文件（用于判断是否同域部署）
+const FRONTEND_DIST_PATH = path.join(__dirname, '../frontend/out');
+const HAS_FRONTEND_DIST = fs.existsSync(FRONTEND_DIST_PATH);
+
+// Middleware - 统一部署模式下放宽 CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: true,
   credentials: true
 }));
 app.use(bodyParser.json());
@@ -353,13 +360,98 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), database: 'sqlite' });
 });
 
+// ==================== Frontend Serving ====================
+
+// 生产模式：服务静态文件
+if (HAS_FRONTEND_DIST) {
+  // 服务静态文件
+  app.use(express.static(FRONTEND_DIST_PATH));
+  
+  // 所有非 API 路由返回前端页面（支持 SPA 路由）
+  app.get('*', (req, res, next) => {
+    // 跳过 API 和数据路由
+    if (req.path.startsWith('/api/') || req.path.startsWith('/data/')) {
+      return next();
+    }
+    
+    // 检查是否有对应的静态文件（支持 trailingSlash）
+    let filePath = path.join(FRONTEND_DIST_PATH, req.path);
+    
+    // 如果路径以 / 结尾，查找 index.html
+    if (req.path.endsWith('/')) {
+      filePath = path.join(filePath, 'index.html');
+    }
+    
+    // 如果文件存在，发送文件
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      return res.sendFile(filePath);
+    }
+    
+    // 如果是目录，查找 index.html
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+      const indexPath = path.join(filePath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        return res.sendFile(indexPath);
+      }
+    }
+    
+    // 尝试添加 .html 扩展名
+    const htmlPath = filePath + '.html';
+    if (fs.existsSync(htmlPath)) {
+      return res.sendFile(htmlPath);
+    }
+    
+    // 回退到首页（用于客户端路由）
+    const indexPath = path.join(FRONTEND_DIST_PATH, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
+    
+    next();
+  });
+} else if (IS_DEV) {
+  // 开发模式：代理到 Next.js 开发服务器
+  const { createProxyMiddleware } = require('http-proxy-middleware');
+  
+  const frontendProxy = createProxyMiddleware({
+    target: `http://localhost:${FRONTEND_DEV_PORT}`,
+    changeOrigin: true,
+    ws: true, // 支持 WebSocket（热更新需要）
+    logLevel: 'warn',
+    onError: (err, req, res) => {
+      console.error('Proxy error:', err.message);
+      res.status(502).json({ 
+        error: 'Frontend dev server not running',
+        message: `Please start frontend: cd frontend && npm run dev`
+      });
+    }
+  });
+  
+  // 代理所有非 API 请求到前端开发服务器
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/') || req.path.startsWith('/data/')) {
+      return next();
+    }
+    return frontendProxy(req, res, next);
+  });
+}
+
 // Start Server
 const startServer = async () => {
   await initializePasswordHash();
   app.listen(PORT, () => {
-    console.log(`🚀 Backend server is running on http://localhost:${PORT}`);
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
     console.log(`📁 Data files served from /data`);
-    console.log(`💾 Using SQLite database for persistent storage`);
+    console.log(`💾 Using SQLite database`);
+    
+    if (HAS_FRONTEND_DIST) {
+      console.log(`📦 Production mode - serving static files from ${FRONTEND_DIST_PATH}`);
+    } else if (IS_DEV) {
+      console.log(`🔧 Development mode - proxying to Next.js at http://localhost:${FRONTEND_DEV_PORT}`);
+      console.log(`   Start frontend first: cd frontend && npm run dev`);
+    } else {
+      console.log(`⚠️  No frontend build found. Run 'npm run build' in frontend/`);
+    }
   });
 };
 
