@@ -1,9 +1,11 @@
+const path = require('path');
+
 module.exports = {
   apps: [
     {
       name: 'kktools',
-      script: './backend/server.js',
-      cwd: __dirname,
+      script: 'server.js',
+      cwd: path.join(__dirname, 'backend'),
       instances: 1,
       autorestart: true,
       watch: false,
