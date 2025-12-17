@@ -33,12 +33,15 @@ export function Header({
   onStarlightLogout,
   showStarlightLogout = false,
 }: HeaderProps) {
-  const categories: { id: CategoryType; label: string; special?: boolean }[] = [
+  const allCategories: { id: CategoryType; label: string; special?: boolean; adminOnly?: boolean }[] = [
     { id: 'AiCC', label: 'AiCC' },
     { id: 'UXLib', label: 'UXLib' },
-    { id: 'Learning', label: 'Learning' },
+    { id: 'Learning', label: 'Learning', adminOnly: true },
     { id: 'Starlight Academy', label: 'Starlight', special: true },
   ];
+  
+  // Filter out admin-only categories for non-admin users
+  const categories = allCategories.filter(cat => !cat.adminOnly || isAuthenticated);
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-border">

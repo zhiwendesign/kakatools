@@ -111,8 +111,13 @@ export function useResources(): UseResourcesReturn {
       activeFilter: string,
       searchQuery: string,
       tagFilter: string,
-      _isAuthenticated: boolean // kept for API compatibility
+      isAuthenticated: boolean
     ): Resource[] => {
+      // Learning is admin-only
+      if (category === 'Learning' && !isAuthenticated) {
+        return [];
+      }
+      
       let items = resources.filter((item) => item.category === category);
 
       // Apply tag filter from dropdown

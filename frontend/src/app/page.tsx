@@ -55,6 +55,10 @@ export default function HomePage() {
 
   // Handle category change
   const handleCategoryChange = (category: CategoryType) => {
+    // Learning requires admin authentication
+    if (category === 'Learning' && !isAuthenticated) {
+      return; // Non-admin cannot access Learning
+    }
     // Starlight requires access key (unless admin)
     if (category === 'Starlight Academy' && !hasStarlightAccess) {
       setShowAccessModal(true);
@@ -69,6 +73,13 @@ export default function HomePage() {
     setActiveFilter('All');
     setSearchQuery('');
   }, [activeCategory]);
+
+  // If user logs out while viewing Learning, switch to AiCC
+  useEffect(() => {
+    if (activeCategory === 'Learning' && !isAuthenticated) {
+      setActiveCategory('AiCC');
+    }
+  }, [isAuthenticated, activeCategory]);
 
   // Get filtered resources
   const filteredResources = useMemo(() => {
