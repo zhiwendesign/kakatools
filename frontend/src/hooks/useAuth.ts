@@ -22,17 +22,24 @@ export function useAuth(): UseAuthReturn {
   useEffect(() => {
     const checkAuth = async () => {
       const storedToken = getStorageItem(STORAGE_KEYS.AUTH_TOKEN);
+      console.log('[useAuth] Checking stored token:', storedToken ? `${storedToken.substring(0, 8)}...` : 'none');
       
       if (storedToken) {
         try {
+          console.log('[useAuth] Verifying token with backend...');
           const result = await verifyToken(storedToken);
+          console.log('[useAuth] Verify result:', result);
+          
           if (result.success) {
             setToken(storedToken);
             setIsAuthenticated(true);
+            console.log('[useAuth] Token verified successfully');
           } else {
+            console.log('[useAuth] Token invalid, removing from storage');
             removeStorageItem(STORAGE_KEYS.AUTH_TOKEN);
           }
-        } catch {
+        } catch (error) {
+          console.error('[useAuth] Token verification error:', error);
           removeStorageItem(STORAGE_KEYS.AUTH_TOKEN);
         }
       }
@@ -44,9 +51,11 @@ export function useAuth(): UseAuthReturn {
   }, []);
 
   const login = useCallback((newToken: string) => {
+    console.log('[useAuth] Login called with token:', newToken.substring(0, 8) + '...');
     setStorageItem(STORAGE_KEYS.AUTH_TOKEN, newToken);
     setToken(newToken);
     setIsAuthenticated(true);
+    console.log('[useAuth] Token stored and state updated');
   }, []);
 
   const logout = useCallback(async () => {

@@ -81,9 +81,23 @@ app.post('/api/auth/login', async (req, res) => {
 
     if (isValidPassword) {
       const token = generateToken();
-      // Store token in SQLite
-      tokens.add(token, 'admin');
-      console.log(`Login successful. Token generated: ${token.substring(0, 8)}...`);
+      // Store token in SQLite and verify it was stored
+      const stored = tokens.add(token, 'admin');
+      
+      if (!stored) {
+        console.error('Failed to store token in database');
+        return res.status(500).json({ success: false, message: '服务器错误：无法保存登录状态' });
+      }
+      
+      // Verify token was actually stored
+      const verified = tokens.verify(token);
+      console.log(`Login successful. Token: ${token.substring(0, 8)}..., Stored: ${stored}, Verified: ${verified}`);
+      
+      if (!verified) {
+        console.error('Token stored but verification failed!');
+        return res.status(500).json({ success: false, message: '服务器错误：登录状态验证失败' });
+      }
+      
       res.json({ success: true, token });
     } else {
       console.log('Login failed: Incorrect password');

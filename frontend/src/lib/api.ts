@@ -57,15 +57,28 @@ export async function login(password: string): Promise<LoginResponse> {
 }
 
 export async function verifyToken(token: string): Promise<VerifyResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
-  
-  return response.json();
+  try {
+    const url = `${API_BASE_URL}/api/auth/verify`;
+    console.log('[API] Verifying token at:', url);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    console.log('[API] Verify response status:', response.status);
+    
+    const data = await response.json();
+    console.log('[API] Verify response data:', data);
+    
+    return data;
+  } catch (error) {
+    console.error('[API] Verify token error:', error);
+    return { success: false, message: 'Network error' };
+  }
 }
 
 export async function logout(token: string): Promise<void> {
