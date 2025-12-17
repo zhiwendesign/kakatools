@@ -1,0 +1,131 @@
+{
+    "filters": [
+        {
+            "label": "全部",
+            "tag": "All"
+        },
+        {
+            "label": "卡卡推荐",
+            "tag": "卡卡推荐"
+        },
+        {
+            "label": "UI/UX设计",
+            "tag": "UI/UX"
+        },
+        {
+            "label": "3D与动效",
+            "tag": "3D"
+        },
+        {
+            "label": "无代码",
+            "tag": "No-Code"
+        },
+        {
+            "label": "灵感素材",
+            "tag": "Inspiration"
+        },
+        {
+            "label": "生产力工具",
+            "tag": "Productivity"
+        },
+        {
+            "label": "实用工具",
+            "tag": "Tools"
+        }
+    ],
+    "resources": [
+        {
+            "id": "design-1",
+            "title": "Figma",
+            "description": "协作设计工具，用于创建用户界面和原型。",
+            "category": "UXLib",
+            "tags": [
+                "UI/UX",
+                "Prototyping",
+                "Collaboration"
+            ],
+            "imageUrl": "https://picsum.photos/id/40/600/400",
+            "link": "https://figma.com",
+            "featured": true
+        },
+        {
+            "id": "design-2",
+            "title": "Framer",
+            "description": "交互式设计工具，用于创建精美的网站和动画。",
+            "category": "UXLib",
+            "tags": [
+                "UI/UX",
+                "Animation",
+                "Web"
+            ],
+            "imageUrl": "https://picsum.photos/id/41/600/400",
+            "link": "#"
+        },
+        {
+            "id": "design-3",
+            "title": "Blender",
+            "description": "免费开源的3D创作套件，支持整个制作流程。",
+            "category": "UXLib",
+            "tags": [
+                "3D",
+                "Animation",
+                "Modeling"
+            ],
+            "imageUrl": "https://picsum.photos/id/42/600/400",
+            "link": "#"
+        },
+        {
+            "id": "design-4",
+            "title": "Webflow",
+            "description": "可视化网页设计平台，具备强大的托管和CMS功能。",
+            "category": "UXLib",
+            "tags": [
+                "No-Code",
+                "Web",
+                "CMS"
+            ],
+            "imageUrl": "https://picsum.photos/id/43/600/400",
+            "link": "#"
+        },
+        {
+            "id": "design-5",
+            "title": "Dribbble",
+            "description": "创意人士分享作品和获取灵感的社区平台。",
+            "category": "UXLib",
+            "tags": [
+                "Inspiration",
+                "Community",
+                "Portfolio"
+            ],
+            "imageUrl": "https://picsum.photos/id/44/600/400",
+            "link": "#"
+        },
+        {
+            "id": "design-6",
+            "title": "LottieFiles",
+            "description": "查找、测试和分享Lottie动画的平台。",
+            "category": "UXLib",
+            "tags": [
+                "Animation",
+                "Tools",
+                "Resources"
+            ],
+            "imageUrl": "https://picsum.photos/id/45/600/400",
+            "link": "#"
+        },
+        {
+            "id": "design-7",
+            "title": "Canva",
+            "description": "在线设计平台，提供丰富的模板和设计工具，适合快速创作。",
+            "category": "UXLib",
+            "tags": [
+                "Templates",
+                "Design",
+                "Easy"
+            ],
+            "imageUrl": "https://picsum.photos/id/101/600/400",
+            "link": "https://canva.com",
+            "featured": true
+        }
+    ]
+}

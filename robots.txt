@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://kaka-resources.com/sitemap.xml
+
+# Disallow admin and config pages
+Disallow: /api/
+Disallow: /config
+Disallow: /*.json$
+Disallow: /.env*
+
+# Allow important pages
+Allow: /index.html
+Allow: /starlight-academy
+
+# Crawl delay for better server performance
+Crawl-delay: 1
