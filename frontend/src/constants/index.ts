@@ -3,12 +3,12 @@ import { CategoryType, FiltersMap } from '@/types';
 // API Configuration
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4200';
 
-// Data Sources
+// Data Sources - 使用数据库 API 端点
 export const DATA_SOURCES: Record<CategoryType, string> = {
-  AiCC: '/data/ai.json',
-  UXLib: '/data/design.json',
-  Learning: '/data/learning.json',
-  'Starlight Academy': '/data/starlight.json',
+  AiCC: '/api/resources/AiCC',
+  UXLib: '/api/resources/UXLib',
+  Learning: '/api/resources/Learning',
+  'Starlight Academy': '/api/resources/Starlight Academy',
 };
 
 // Default Filters
