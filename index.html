@@ -1700,7 +1700,7 @@
       };
 
       // ConfigView Component
-      const ConfigView = ({ resources, onUpdateResource, onAddResource, onDeleteResource, onSortResources, filters, onAddFilterTag, onDeleteFilterTag, onSetFilters, isAuthenticated, onTokenRequired, contactImage, setContactImage, cooperationImage, setCooperationImage }) => {
+      const ConfigView = ({ resources, onUpdateResource, onAddResource, onDeleteResource, onSortResources, filters, onAddFilterTag, onDeleteFilterTag, onSetFilters, isAuthenticated, onTokenRequired, contactImage, setContactImage, cooperationImage, setCooperationImage, setActiveFilter }) => {
         const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
         const [saveStatus, setSaveStatus] = useState({ type: '', message: '' });
         const [showApiKey, setShowApiKey] = useState(false);
@@ -3361,6 +3361,7 @@
                 setContactImage={setContactImage}
                 cooperationImage={cooperationImage}
                 setCooperationImage={setCooperationImage}
+                setActiveFilter={setActiveFilter}
               />
             ) : (
               <main className="container mx-auto px-4 md:px-6 py-12 animate-fade-in">
