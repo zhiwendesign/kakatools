@@ -340,17 +340,20 @@
 
       const DEFAULT_RESOURCES = [];
 
+      // API 基础 URL
+      const API_BASE_URL = 'https://k.uxlib.cn';
+      
       // 动态数据源配置，根据认证状态决定是否加载Learning
       const getDataSources = (isAuthenticated) => {
         const sources = {
-          AiCC: './data/ai.json',
-          UXLib: './data/design.json',
-          'Starlight Academy': './data/starlight.json'
+          AiCC: `${API_BASE_URL}/api/resources/AiCC`,
+          UXLib: `${API_BASE_URL}/api/resources/UXLib`,
+          'Starlight Academy': `${API_BASE_URL}/api/resources/Starlight Academy`
         };
         
         // 只有管理员登录后才加载Learning数据
         if (isAuthenticated) {
-          sources.Learning = './data/learning.json';
+          sources.Learning = `${API_BASE_URL}/api/resources/Learning`;
           DEFAULT_FILTERS.Learning = [];
         }
         
