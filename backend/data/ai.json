@@ -1,0 +1,99 @@
+{
+  "filters": [
+    { "label": "全部", "tag": "All" },
+    { "label": "卡卡推荐", "tag": "卡卡推荐" },
+    { "label": "大语言模型", "tag": "LLM" },
+    { "label": "图像生成", "tag": "Image Gen" },
+    { "label": "视频生成", "tag": "Video" },
+    { "label": "音频处理", "tag": "Audio" },
+    { "label": "编程工具", "tag": "Coding" },
+    { "label": "搜索研究", "tag": "Search" }
+  ],
+  "resources": [
+    {
+      "id": "ai-1",
+      "title": "Gemini",
+      "description": "谷歌最先进的AI模型，支持多模态功能。",
+      "category": "AiCC",
+      "tags": ["LLM", "Multimodal", "Google"],
+      "imageUrl": "https://picsum.photos/id/1/600/400",
+      "link": "https://gemini.google.com",
+      "featured": true
+    },
+    {
+      "id": "ai-2",
+      "title": "Midjourney",
+      "description": "基于文本提示生成高质量艺术风格图像。",
+      "category": "AiCC",
+      "tags": ["Image Gen", "Art", "Discord"],
+      "imageUrl": "https://picsum.photos/id/16/600/400",
+      "link": "#"
+    },
+    {
+      "id": "ai-3",
+      "title": "Runway Gen-3",
+      "description": "为创意故事讲述者提供先进的视频生成能力。",
+      "category": "AiCC",
+      "tags": ["Video", "Cinema", "Creative"],
+      "imageUrl": "https://picsum.photos/id/26/600/400",
+      "link": "#",
+      "featured": true
+    },
+    {
+      "id": "ai-4",
+      "title": "Claude 3.5 Sonnet",
+      "description": "Anthropic最新模型，在编程和推理任务中表现出色。",
+      "category": "AiCC",
+      "tags": ["LLM", "Coding", "Reasoning"],
+      "imageUrl": "https://picsum.photos/id/20/600/400",
+      "link": "#"
+    },
+    {
+      "id": "ai-5",
+      "title": "Perplexity",
+      "description": "AI驱动的搜索引擎，提供准确且有来源引用的答案。",
+      "category": "AiCC",
+      "tags": ["Search", "Research", "Citations"],
+      "imageUrl": "https://picsum.photos/id/24/600/400",
+      "link": "#"
+    },
+    {
+      "id": "ai-6",
+      "title": "ElevenLabs",
+      "description": "语音生成和克隆技术，实现逼真的语音合成。",
+      "category": "AiCC",
+      "tags": ["Audio", "Voice", "Synthesis"],
+      "imageUrl": "https://picsum.photos/id/21/600/400",
+      "link": "#"
+    },
+    {
+      "id": "ai-7",
+      "title": "Cursor",
+      "description": "专为提高生产力而设计的AI优先代码编辑器。",
+      "category": "AiCC",
+      "tags": ["Coding", "Editor", "Productivity"],
+      "imageUrl": "https://picsum.photos/id/23/600/400",
+      "link": "#"
+    },
+    {
+      "id": "ai-8",
+      "title": "Notion AI",
+      "description": "集成在Notion工作空间平台内的AI写作助手。",
+      "category": "AiCC",
+      "tags": ["Writing", "Productivity", "Workspace"],
+      "imageUrl": "https://picsum.photos/id/25/600/400",
+      "link": "#"
+    },
+    {
+      "id": "ai-9",
+      "title": "ChatGPT",
+      "description": "OpenAI开发的强大对话AI助手，在文本生成和理解方面表现出色。",
+      "category": "AiCC",
+      "tags": ["LLM", "Chat", "OpenAI"],
+      "imageUrl": "https://picsum.photos/id/100/600/400",
+      "link": "https://chat.openai.com",
+      "featured": true
+    }
+  ]
+}
+
