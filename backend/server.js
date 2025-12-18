@@ -33,12 +33,18 @@ app.use('/data', express.static(path.join(__dirname, 'data')));
 // 密码配置 - 使用环境变量或默认哈希值
 let ADMIN_PASSWORD_HASH;
 
-// 在启动时直接生成有效的密码哈希，确保对应明文密码 'admin123'
+// 在启动时使用环境变量中的密码哈希，如果没有则生成默认哈希
 const initializePasswordHash = async () => {
   try {
-    // 直接生成新的密码哈希，确保对应明文密码 'admin123'
-    ADMIN_PASSWORD_HASH = await bcrypt.hash('admin123', 10);
-    console.log('已生成新的密码哈希，默认密码: admin123');
+    // 优先使用环境变量中的密码哈希
+    if (process.env.ADMIN_PASSWORD_HASH) {
+      ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
+      console.log('使用环境变量中的密码哈希');
+    } else {
+      // 环境变量未设置时，生成默认密码哈希（admin123）
+      ADMIN_PASSWORD_HASH = await bcrypt.hash('admin123', 10);
+      console.log('已生成新的密码哈希，默认密码: admin123');
+    }
   } catch (error) {
     console.error('密码哈希生成失败:', error);
     process.exit(1);
