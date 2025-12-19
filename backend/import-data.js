@@ -132,7 +132,11 @@ const SAMPLE_DATA = {
       },
     ],
   },
+<<<<<<< HEAD
   '卡卡学堂': {
+=======
+  'Starlight Academy': {
+>>>>>>> e582062b42457fe711956dab405c089c1adedc56
     filters: [
       { label: 'All', tag: 'All' },
       { label: 'Exclusive', tag: 'Exclusive' },

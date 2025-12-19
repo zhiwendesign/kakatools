@@ -21,10 +21,9 @@ export interface CategoryData {
 }
 
 // Category Types
-export type CategoryType = 'AiCC' | 'UXLib' | 'Learning'
-  | '卡卡学堂';
+export type CategoryType = 'AiCC' | 'UXLib' | 'Learning' | 'Starlight Academy';
 
-export const CATEGORIES: CategoryType[] = ['AiCC', 'UXLib', 'Learning', '卡卡学堂'];
+export const CATEGORIES: CategoryType[] = ['AiCC', 'UXLib', 'Learning', 'Starlight Academy'];
 
 // Auth Types
 export interface AuthState {

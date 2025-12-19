@@ -18,7 +18,7 @@ import {
 import { createResource, updateResource, deleteResource, addFilter, deleteFilter, login as apiLogin } from '@/lib/api';
 import { STORAGE_KEYS } from '@/constants';
 
-const CATEGORY_TABS: CategoryType[] = ['AiCC', 'UXLib', 'Learning', '卡卡学堂'];
+const CATEGORY_TABS: CategoryType[] = ['AiCC', 'UXLib', 'Learning', 'Starlight Academy'];
 
 export default function ConfigPage() {
   const { isAuthenticated, token, login, logout, isLoading: authLoading } = useAuth();
@@ -195,7 +195,7 @@ export default function ConfigPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-3xl font-bold text-primary mb-2">配置</h2>
-              <p className="text-secondary text-sm">管理资源详情、链接和二级菜单。</p>
+              <p className="text-secondary text-sm">管理资源详情、链接和过滤标签。</p>
             </div>
             <div className="flex items-center gap-3">
               {/* Tag Dictionary Button */}
@@ -211,7 +211,6 @@ export default function ConfigPage() {
               >
                 <Icon name="list" size={16} /> 标签字典
               </Button>
-
               {/* Header Config Button */}
               <Button
                 variant={editorView === 'header' ? 'secondary' : 'outline'}
@@ -249,7 +248,7 @@ export default function ConfigPage() {
                   setEditingId(null);
                 }}
               >
-                <Icon name="tag" size={16} /> 管理二级菜单
+                <Icon name="tag" size={16} /> 管理标签
               </Button>
 
               {/* Add New Resource Button */}
@@ -283,7 +282,7 @@ export default function ConfigPage() {
                         : 'text-secondary hover:text-primary'
                     }`}
                   >
-                    {tab === '卡卡学堂' ? 'kkstudy' : tab}
+                    {tab === 'Starlight Academy' ? 'Starlight' : tab}
                   </button>
                 ))}
               </div>
@@ -354,7 +353,7 @@ export default function ConfigPage() {
                       <Icon name="key" size={24} className="text-yellow-500" />
                       Access Keys Management
                     </h3>
-                    <p className="text-sm text-secondary mt-1">管理 kkstudy Academy 的访问密钥</p>
+                    <p className="text-sm text-secondary mt-1">管理 Starlight Academy 的访问密钥</p>
                   </div>
                   <KeyManagement
                     isAuthenticated={isAuthenticated}
@@ -369,7 +368,6 @@ export default function ConfigPage() {
                 />
               ) : showManageFilters ? (
                 <ManageFiltersForm
-                  activeCategory={activeTab}
                   filters={filters}
                   onAddFilter={handleAddFilter}
                   onDeleteFilter={handleDeleteFilter}

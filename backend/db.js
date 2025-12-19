@@ -1,67 +1,168 @@
-const tokensStore = [];
-const accessKeyStore = [];
-const resourceStore = new Map();
-const filterStore = new Map();
+const Database = require('better-sqlite3');
+const path = require('path');
+const fs = require('fs');
+
+// Database file path
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'kktools.db');
+
+// Ensure data directory exists
+const dataDir = path.dirname(DB_PATH);
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// Initialize database
+const db = new Database(DB_PATH);
+
+// Enable WAL mode for better performance
+db.pragma('journal_mode = WAL');
+
+// ==================== Initialize Tables ====================
+
+// Tokens table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    token TEXT UNIQUE NOT NULL,
+    type TEXT DEFAULT 'admin',
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER
+  )
+`);
+
+// Access keys table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS access_keys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT UNIQUE NOT NULL,
+    username TEXT DEFAULT 'Anonymous',
+    name TEXT,
+    duration INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL
+  )
+`);
+
+// Resources table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS resources (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    category TEXT NOT NULL,
+    tags TEXT NOT NULL,
+    image_url TEXT,
+    link TEXT,
+    featured INTEGER DEFAULT 0,
+    sort_order INTEGER DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )
+`);
+
+// Filters table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS filters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category TEXT NOT NULL,
+    label TEXT NOT NULL,
+    tag TEXT NOT NULL,
+    sort_order INTEGER DEFAULT 0,
+    UNIQUE(category, tag)
+  )
+`);
+
+// Create indexes
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_tokens_token ON tokens(token);
+  CREATE INDEX IF NOT EXISTS idx_tokens_expires ON tokens(expires_at);
+  CREATE INDEX IF NOT EXISTS idx_access_keys_code ON access_keys(code);
+  CREATE INDEX IF NOT EXISTS idx_access_keys_expires ON access_keys(expires_at);
+  CREATE INDEX IF NOT EXISTS idx_resources_category ON resources(category);
+  CREATE INDEX IF NOT EXISTS idx_filters_category ON filters(category);
+`);
+
+console.log('📦 Database initialized successfully');
+
+// ==================== Token Operations ====================
+
+const tokenOps = {
+  add: db.prepare(`
+    INSERT INTO tokens (token, type, created_at, expires_at) 
+    VALUES (@token, @type, @createdAt, @expiresAt)
+  `),
+  verify: db.prepare(`
+    SELECT * FROM tokens 
+    WHERE token = ? AND (expires_at IS NULL OR expires_at > ?)
+  `),
+  delete: db.prepare(`DELETE FROM tokens WHERE token = ?`),
+  cleanup: db.prepare(`DELETE FROM tokens WHERE expires_at IS NOT NULL AND expires_at < ?`),
+};
 
 const tokens = {
   add(token, type = 'admin', expiresAt = null) {
-    const existing = tokensStore.find((t) => t.token === token);
-    if (existing) return false;
-    tokensStore.push({ token, type, created_at: Date.now(), expires_at: expiresAt });
-    return true;
+    try {
+      tokenOps.add.run({ token, type, createdAt: Date.now(), expiresAt });
+      return true;
+    } catch (error) {
+      console.error('Error adding token:', error);
+      return false;
+    }
   },
   verify(token) {
-    const now = Date.now();
-    const row = tokensStore.find((t) => t.token === token && (!t.expires_at || t.expires_at > now));
-    return !!row;
+    return !!tokenOps.verify.get(token, Date.now());
   },
+  // 获取 token 类型（admin 或 starlight）
   getType(token) {
-    const now = Date.now();
-    const row = tokensStore.find((t) => t.token === token && (!t.expires_at || t.expires_at > now));
+    const row = tokenOps.verify.get(token, Date.now());
     return row ? row.type : null;
   },
+  // 验证是否是管理员 token
   isAdmin(token) {
     return this.getType(token) === 'admin';
   },
   delete(token) {
-    const idx = tokensStore.findIndex((t) => t.token === token);
-    if (idx >= 0) {
-      tokensStore.splice(idx, 1);
-      return true;
-    }
-    return false;
+    return tokenOps.delete.run(token).changes > 0;
   },
   cleanup() {
-    const now = Date.now();
-    let removed = 0;
-    for (let i = tokensStore.length - 1; i >= 0; i--) {
-      const t = tokensStore[i];
-      if (t.expires_at && t.expires_at < now) {
-        tokensStore.splice(i, 1);
-        removed++;
-      }
-    }
-    return removed;
+    const result = tokenOps.cleanup.run(Date.now());
+    if (result.changes > 0) console.log(`🧹 Cleaned up ${result.changes} expired tokens`);
+    return result.changes;
   },
+};
+
+// ==================== Access Key Operations ====================
+
+const keyOps = {
+  add: db.prepare(`
+    INSERT INTO access_keys (code, username, duration, created_at, expires_at)
+    VALUES (@code, @username, @duration, @createdAt, @expiresAt)
+  `),
+  findByCode: db.prepare(`SELECT * FROM access_keys WHERE code = ?`),
+  getAll: db.prepare(`SELECT * FROM access_keys WHERE expires_at > ?`),
+  delete: db.prepare(`DELETE FROM access_keys WHERE code = ?`),
+  updateName: db.prepare(`UPDATE access_keys SET name = ? WHERE code = ?`),
+  cleanup: db.prepare(`DELETE FROM access_keys WHERE expires_at < ?`),
 };
 
 const accessKeys = {
   add(code, username, durationInDays) {
     const now = Date.now();
     const expiresAt = now + durationInDays * 24 * 60 * 60 * 1000;
-    const existing = accessKeyStore.find((k) => k.code === code.toUpperCase());
-    if (existing) return null;
-    const row = { code: code.toUpperCase(), username, name: null, duration: durationInDays, created_at: now, expires_at: expiresAt };
-    accessKeyStore.push(row);
-    return { code: row.code, username: row.username, duration: row.duration, createdAt: row.created_at, expiresAt: row.expires_at };
+    try {
+      keyOps.add.run({ code, username, duration: durationInDays, createdAt: now, expiresAt });
+      return { code, username, duration: durationInDays, createdAt: now, expiresAt };
+    } catch (error) {
+      console.error('Error adding access key:', error);
+      return null;
+    }
   },
   findByCode(code) {
-    const row = accessKeyStore.find((k) => k.code === code.trim().toUpperCase());
-    return row || null;
+    return keyOps.findByCode.get(code.trim().toUpperCase());
   },
   getAll() {
-    const now = Date.now();
-    return accessKeyStore.filter((k) => k.expires_at > now).map((row) => ({
+    keyOps.cleanup.run(Date.now());
+    return keyOps.getAll.all(Date.now()).map((row) => ({
       code: row.code,
       username: row.username,
       name: row.name,
@@ -71,91 +172,98 @@ const accessKeys = {
     }));
   },
   delete(code) {
-    const idx = accessKeyStore.findIndex((k) => k.code === code);
-    if (idx >= 0) {
-      accessKeyStore.splice(idx, 1);
-      return true;
-    }
-    return false;
+    return keyOps.delete.run(code).changes > 0;
   },
   updateName(code, name) {
-    const row = accessKeyStore.find((k) => k.code === code);
-    if (!row) return null;
-    row.name = name;
-    return this.findByCode(code);
+    const result = keyOps.updateName.run(name, code);
+    return result.changes > 0 ? this.findByCode(code) : null;
   },
   isExpired(key) {
     return Date.now() > key.expires_at;
   },
   cleanup() {
-    const now = Date.now();
-    let removed = 0;
-    for (let i = accessKeyStore.length - 1; i >= 0; i--) {
-      const k = accessKeyStore[i];
-      if (k.expires_at < now) {
-        accessKeyStore.splice(i, 1);
-        removed++;
-      }
-    }
-    return removed;
+    const result = keyOps.cleanup.run(Date.now());
+    if (result.changes > 0) console.log(`🧹 Cleaned up ${result.changes} expired access keys`);
+    return result.changes;
   },
+};
+
+// ==================== Resource Operations ====================
+
+const resourceOps = {
+  upsert: db.prepare(`
+    INSERT INTO resources (id, title, description, category, tags, image_url, link, featured, sort_order, created_at, updated_at)
+    VALUES (@id, @title, @description, @category, @tags, @imageUrl, @link, @featured, @sortOrder, @createdAt, @updatedAt)
+    ON CONFLICT(id) DO UPDATE SET
+      title = @title,
+      description = @description,
+      category = @category,
+      tags = @tags,
+      image_url = @imageUrl,
+      link = @link,
+      featured = @featured,
+      sort_order = @sortOrder,
+      updated_at = @updatedAt
+  `),
+  getByCategory: db.prepare(`SELECT * FROM resources WHERE category = ? ORDER BY sort_order, title`),
+  getAll: db.prepare(`SELECT * FROM resources ORDER BY category, sort_order, title`),
+  getById: db.prepare(`SELECT * FROM resources WHERE id = ?`),
+  delete: db.prepare(`DELETE FROM resources WHERE id = ?`),
+  deleteByCategory: db.prepare(`DELETE FROM resources WHERE category = ?`),
 };
 
 const resources = {
   upsert(resource) {
     const now = Date.now();
-    const existing = resourceStore.get(resource.id) || {};
-    const row = {
-      id: resource.id,
-      title: resource.title,
-      description: resource.description || '',
-      category: resource.category,
-      tags: JSON.stringify(resource.tags || []),
-      image_url: resource.imageUrl || resource.image_url || '',
-      link: resource.link || '',
-      featured: resource.featured ? 1 : 0,
-      sort_order: resource.sortOrder || resource.sort_order || 0,
-      created_at: existing.created_at || resource.createdAt || now,
-      updated_at: now,
-    };
-    resourceStore.set(resource.id, row);
-    return true;
-  },
-  upsertMany(items) {
-    let count = 0;
-    for (const item of items) {
-      if (this.upsert(item)) count++;
+    try {
+      resourceOps.upsert.run({
+        id: resource.id,
+        title: resource.title,
+        description: resource.description || '',
+        category: resource.category,
+        tags: JSON.stringify(resource.tags || []),
+        imageUrl: resource.imageUrl || resource.image_url || '',
+        link: resource.link || '',
+        featured: resource.featured ? 1 : 0,
+        sortOrder: resource.sortOrder || resource.sort_order || 0,
+        createdAt: resource.createdAt || now,
+        updatedAt: now,
+      });
+      return true;
+    } catch (error) {
+      console.error('Error upserting resource:', error);
+      return false;
     }
-    return count;
   },
+
+  upsertMany: db.transaction((items) => {
+    for (const item of items) {
+      resources.upsert(item);
+    }
+    return items.length;
+  }),
+
   getByCategory(category) {
-    return Array.from(resourceStore.values())
-      .filter((r) => r.category === category)
-      .sort((a, b) => (b.featured - a.featured) || (b.created_at - a.created_at) || a.title.localeCompare(b.title))
-      .map(this._mapRow);
+    return resourceOps.getByCategory.all(category).map(this._mapRow);
   },
+
   getAll() {
-    return Array.from(resourceStore.values())
-      .sort((a, b) => a.category.localeCompare(b.category) || (b.featured - a.featured) || (b.created_at - a.created_at) || a.title.localeCompare(b.title))
-      .map(this._mapRow);
+    return resourceOps.getAll.all().map(this._mapRow);
   },
+
   getById(id) {
-    const row = resourceStore.get(id);
+    const row = resourceOps.getById.get(id);
     return row ? this._mapRow(row) : null;
   },
+
   delete(id) {
-    return resourceStore.delete(id);
+    return resourceOps.delete.run(id).changes > 0;
   },
+
   deleteByCategory(category) {
-    let removed = 0;
-    for (const [id, row] of resourceStore.entries()) {
-      if (row.category === category) {
-        resourceStore.delete(id);
-        removed++;
-      }
-    }
-    return removed;
+    return resourceOps.deleteByCategory.run(category).changes;
   },
+
   _mapRow(row) {
     return {
       id: row.id,
@@ -173,66 +281,74 @@ const resources = {
   },
 };
 
+// ==================== Filter Operations ====================
+
+const filterOps = {
+  upsert: db.prepare(`
+    INSERT INTO filters (category, label, tag, sort_order)
+    VALUES (@category, @label, @tag, @sortOrder)
+    ON CONFLICT(category, tag) DO UPDATE SET
+      label = @label,
+      sort_order = @sortOrder
+  `),
+  getByCategory: db.prepare(`SELECT * FROM filters WHERE category = ? ORDER BY sort_order`),
+  getAll: db.prepare(`SELECT * FROM filters ORDER BY category, sort_order`),
+  delete: db.prepare(`DELETE FROM filters WHERE category = ? AND tag = ?`),
+  deleteByCategory: db.prepare(`DELETE FROM filters WHERE category = ?`),
+};
+
 const filters = {
   upsert(category, label, tag, sortOrder = 0) {
-    const list = filterStore.get(category) || [];
-    const idx = list.findIndex((f) => f.tag === tag);
-    if (idx >= 0) {
-      list[idx] = { category, label, tag, sort_order: sortOrder };
-    } else {
-      list.push({ category, label, tag, sort_order: sortOrder });
+    try {
+      filterOps.upsert.run({ category, label, tag, sortOrder });
+      return true;
+    } catch (error) {
+      console.error('Error upserting filter:', error);
+      return false;
     }
-    filterStore.set(category, list);
-    return true;
   },
-  upsertMany(items, category) {
+
+  upsertMany: db.transaction((items, category) => {
     for (let i = 0; i < items.length; i++) {
-      this.upsert(category, items[i].label, items[i].tag, i);
+      filters.upsert(category, items[i].label, items[i].tag, i);
     }
     return items.length;
-  },
+  }),
+
   getByCategory(category) {
-    const list = filterStore.get(category) || [];
-    return list
-      .slice()
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .map((row) => ({ label: row.label, tag: row.tag }));
+    return filterOps.getByCategory.all(category).map((row) => ({
+      label: row.label,
+      tag: row.tag,
+    }));
   },
+
   getAll() {
+    const rows = filterOps.getAll.all();
     const result = {};
-    for (const [cat, list] of filterStore.entries()) {
-      result[cat] = list
-        .slice()
-        .sort((a, b) => a.sort_order - b.sort_order)
-        .map((row) => ({ label: row.label, tag: row.tag }));
+    for (const row of rows) {
+      if (!result[row.category]) result[row.category] = [];
+      result[row.category].push({ label: row.label, tag: row.tag });
     }
     return result;
   },
+
   delete(category, tag) {
-    const list = filterStore.get(category) || [];
-    const idx = list.findIndex((f) => f.tag === tag);
-    if (idx >= 0) {
-      list.splice(idx, 1);
-      filterStore.set(category, list);
-      return true;
-    }
-    return false;
+    return filterOps.delete.run(category, tag).changes > 0;
   },
+
   deleteByCategory(category) {
-    const list = filterStore.get(category) || [];
-    const count = list.length;
-    filterStore.delete(category);
-    return count;
+    return filterOps.deleteByCategory.run(category).changes;
   },
 };
 
+// Periodic cleanup (every hour)
 setInterval(() => {
   tokens.cleanup();
   accessKeys.cleanup();
 }, 60 * 60 * 1000);
 
 module.exports = {
-  db: null,
+  db,
   tokens,
   accessKeys,
   resources,

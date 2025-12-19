@@ -20,7 +20,7 @@ interface AddResourceFormProps {
   onCancel: () => void;
 }
 
-const CATEGORY_OPTIONS: CategoryType[] = ['AiCC', 'UXLib', 'Learning', '卡卡学堂'];
+const CATEGORY_OPTIONS: CategoryType[] = ['AiCC', 'UXLib', 'Learning', 'Starlight Academy'];
 
 export function AddResourceForm({ filters, onSave, onCancel }: AddResourceFormProps) {
   const [formData, setFormData] = useState({

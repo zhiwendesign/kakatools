@@ -15,9 +15,9 @@ interface HeaderProps {
   cooperationImage: string | null;
   starlightAccess: boolean;
   starlightKeyInfo: AccessKeyInfo | null;
-  onkkstudyLogout: () => void;
+  onStarlightLogout: () => void;
   // Only show starlight logout for non-admin users with starlight key
-  showkkstudyLogout?: boolean;
+  showStarlightLogout?: boolean;
 }
 
 export function Header({
@@ -30,14 +30,14 @@ export function Header({
   cooperationImage,
   starlightAccess,
   starlightKeyInfo,
-  onkkstudyLogout,
-  showkkstudyLogout = false,
+  onStarlightLogout,
+  showStarlightLogout = false,
 }: HeaderProps) {
   const allCategories: { id: CategoryType; label: string; special?: boolean; adminOnly?: boolean }[] = [
     { id: 'AiCC', label: 'AiCC' },
     { id: 'UXLib', label: 'UXLib' },
     { id: 'Learning', label: 'Learning', adminOnly: true },
-    { id: '卡卡学堂', label: 'kkstudy', special: true },
+    { id: 'Starlight Academy', label: 'Starlight', special: true },
   ];
   
   // Filter out admin-only categories for non-admin users
@@ -46,11 +46,8 @@ export function Header({
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-border">
       <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-        {/* Logo - Always goes back to AiCC */}
-        <div
-          className="flex items-center gap-3 cursor-pointer"
-          onClick={() => setActiveCategory('AiCC')}
-        >
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-3 cursor-pointer">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-black/10 overflow-hidden">
             {headerConfig.avatarImage ? (
               <img
@@ -69,7 +66,7 @@ export function Header({
               {headerConfig.title}
             </h1>
           </div>
-        </div>
+        </Link>
 
         {/* Category Toggle */}
         <div className="absolute left-1/2 transform -translate-x-1/2">
@@ -102,12 +99,12 @@ export function Header({
 
         {/* Right Actions */}
         <div className="flex items-center gap-4">
-          {/* kkstudy Access Status - Only show for non-admin users with key */}
-          {showkkstudyLogout && starlightKeyInfo && (
+          {/* Starlight Access Status - Only show for non-admin users with key */}
+          {showStarlightLogout && starlightKeyInfo && (
             <div className="relative group">
               <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 border border-purple-200 text-purple-700 text-xs font-medium hover:bg-purple-100 transition-colors">
                 <Icon name="Sparkles" size={12} />
-                <span>kkstudy访问</span>
+                <span>Starlight访问</span>
               </button>
               {/* Tooltip */}
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
@@ -164,12 +161,12 @@ export function Header({
                 <Icon name="LogOut" size={18} />
               </button>
             )}
-            {/* kkstudy logout button - only for non-admin users */}
-            {showkkstudyLogout && (
+            {/* Starlight logout button - only for non-admin users */}
+            {showStarlightLogout && (
               <button
-                onClick={onkkstudyLogout}
+                onClick={onStarlightLogout}
                 className="p-2 rounded-full hover:bg-purple-50 text-purple-500 hover:text-purple-600 transition-colors"
-                title="退出kkstudy访问"
+                title="退出Starlight访问"
               >
                 <Icon name="LogOut" size={18} />
               </button>

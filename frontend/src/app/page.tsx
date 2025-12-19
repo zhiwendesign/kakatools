@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Header, Footer } from '@/components/layout';
 import { HeroSection, ResourceGrid } from '@/components/home';
 import { TokenModal, AccessModal } from '@/components/modals';
-import { useAuth, useKKStudyAccess, useResources, useHeaderConfig } from '@/hooks';
+import { useAuth, useStarlightAccess, useResources, useHeaderConfig } from '@/hooks';
 import { CategoryType } from '@/types';
 
 export default function HomePage() {
@@ -16,9 +16,9 @@ export default function HomePage() {
   const {
     hasAccess: starlightAccess,
     keyInfo: starlightKeyInfo,
-    verifyKey: grantAccess,
-    logout: revokekkstudyAccess,
-  } = useKKStudyAccess();
+    grantAccess,
+    revokeAccess: revokeStarlightAccess,
+  } = useStarlightAccess();
   
   // Resources hook - 传递 auth token 用于获取管理员专属分类
   const {
@@ -47,11 +47,11 @@ export default function HomePage() {
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [showAccessModal, setShowAccessModal] = useState(false);
 
-  // Admin automatically has kkstudy access
-  const haskkstudyAccess = isAuthenticated || starlightAccess;
+  // Admin automatically has Starlight access
+  const hasStarlightAccess = isAuthenticated || starlightAccess;
   
-  // Only show kkstudy logout if user is NOT admin but HAS starlight access (logged in with key only)
-  const showkkstudyLogout = !isAuthenticated && starlightAccess;
+  // Only show Starlight logout if user is NOT admin but HAS starlight access (logged in with key only)
+  const showStarlightLogout = !isAuthenticated && starlightAccess;
 
   // Handle category change
   const handleCategoryChange = (category: CategoryType) => {
@@ -59,8 +59,8 @@ export default function HomePage() {
     if (category === 'Learning' && !isAuthenticated) {
       return; // Non-admin cannot access Learning
     }
-    // 卡卡学堂 requires access key (unless admin)
-    if (category === '卡卡学堂' && !haskkstudyAccess) {
+    // Starlight requires access key (unless admin)
+    if (category === 'Starlight Academy' && !hasStarlightAccess) {
       setShowAccessModal(true);
       return;
     }
@@ -121,15 +121,15 @@ export default function HomePage() {
   };
 
   // Handle starlight access
-  const handlekkstudyVerify = (token: string, keyInfo: any) => {
+  const handleStarlightVerify = (token: string, keyInfo: any) => {
     grantAccess(token, keyInfo);
     setShowAccessModal(false);
-    setActiveCategory('卡卡学堂');
+    setActiveCategory('Starlight Academy');
   };
 
   // Handle starlight logout
-  const handlekkstudyLogout = async () => {
-    await revokekkstudyAccess();
+  const handleStarlightLogout = async () => {
+    await revokeStarlightAccess();
     setActiveCategory('AiCC');
   };
 
@@ -155,17 +155,17 @@ export default function HomePage() {
         onLogout={handleLogout}
         headerConfig={headerConfig}
         cooperationImage={cooperationImage}
-        starlightAccess={haskkstudyAccess}
+        starlightAccess={hasStarlightAccess}
         starlightKeyInfo={starlightKeyInfo}
-        onkkstudyLogout={handlekkstudyLogout}
-        showkkstudyLogout={showkkstudyLogout}
+        onStarlightLogout={handleStarlightLogout}
+        showStarlightLogout={showStarlightLogout}
       />
 
-      {/* Access Modal for kkstudy */}
+      {/* Access Modal for Starlight */}
       <AccessModal
         isOpen={showAccessModal}
         onClose={() => setShowAccessModal(false)}
-        onVerify={handlekkstudyVerify}
+        onVerify={handleStarlightVerify}
       />
 
       {/* Token Modal for Admin */}

@@ -62,17 +62,28 @@ export async function fetchAllCategoriesData(
 // ==================== Auth API ====================
 
 export async function login(password: string): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password }),
-  });
-  
-  // 确保响应是JSON格式
-  const data = await response.json();
-  
-  // 如果响应状态码不是200，仍然返回解析后的JSON，让调用方处理
-  return data;
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    
+    // 检查响应状态
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ success: false, message: '网络错误' }));
+      return errorData;
+    }
+    
+    // 确保响应是JSON格式
+    const data = await response.json();
+    
+    // 如果响应状态码不是200，仍然返回解析后的JSON，让调用方处理
+    return data;
+  } catch (error) {
+    console.error('Login API error:', error);
+    return { success: false, message: '网络错误，请检查服务器连接' };
+  }
 }
 
 export async function verifyToken(token: string): Promise<VerifyResponse> {

@@ -52,7 +52,7 @@ export function AccessModal({ isOpen, onClose, onVerify }: AccessModalProps) {
         <div className="w-16 h-16 bg-gradient-to-tr from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Icon name="Sparkles" size={32} className="text-purple-600" />
         </div>
-        <h3 className="text-2xl font-bold text-primary mb-2">卡卡学堂</h3>
+        <h3 className="text-2xl font-bold text-primary mb-2">Starlight Academy</h3>
         <p className="text-secondary text-sm">
           请联系 卡卡（微信：XingYueAiArt）获取密钥
         </p>

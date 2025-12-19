@@ -9,7 +9,7 @@ export const DATA_SOURCES: Record<CategoryType, string> = {
   AiCC: '/api/resources/AiCC',
   UXLib: '/api/resources/UXLib',
   Learning: '/api/resources/Learning',
-  '卡卡学堂': '/api/resources/卡卡学堂',
+  'Starlight Academy': '/api/resources/Starlight Academy',
 };
 
 // Default Filters
@@ -26,7 +26,7 @@ export const DEFAULT_FILTERS: FiltersMap = {
     { label: '全部', tag: 'All' },
     { label: '卡卡推荐', tag: '卡卡推荐' },
   ],
-  '卡卡学堂': [
+  'Starlight Academy': [
     { label: 'All', tag: 'All' },
     { label: 'Exclusive', tag: 'Exclusive' },
   ],
@@ -46,17 +46,17 @@ export const CATEGORY_INFO: Record<CategoryType, { title: string; subtitle: stri
     title: '内部学习资源',
     subtitle: '学习资源与教程集合丨欢迎合作交流微信🛰️XingYueAIArt',
   },
-  '卡卡学堂': {
-    title: '卡卡学堂',
-    subtitle: '愿大家像星星一样散发着光芒，有无限可能',
+  'Starlight Academy': {
+    title: 'Starlight Academy',
+    subtitle: 'Starlight探索与内部学习资源丨欢迎合作交流微信🛰️XingYueAIArt',
   },
 };
 
 // Local Storage Keys
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'authToken',
-  KKSTUDY_TOKEN: 'kkstudy_token',
-  KKSTUDY_KEY_INFO: 'kkstudy_key_info',
+  STARLIGHT_TOKEN: 'starlight_token',
+  STARLIGHT_KEY_INFO: 'starlight_key_info',
   HEADER_AVATAR: 'header_avatar',
   HEADER_AVATAR_IMAGE: 'header_avatar_image',
   HEADER_TITLE: 'header_title',

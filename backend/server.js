@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 // Import database operations
 const { tokens, accessKeys, resources, filters } = require('./db');
@@ -31,23 +31,25 @@ app.use(bodyParser.json({ limit: '5mb' }));
 app.use('/data', express.static(path.join(__dirname, 'data')));
 
 // 密码配置 - 使用环境变量或默认哈希值
-let ADMIN_PASSWORD_HASH;
+// 默认密码哈希对应明文密码: 'admin123' (请在生产环境中修改)
+const DEFAULT_ADMIN_PASSWORD_HASH = '$2b$10$fqSNTFsk5LB9SxUC0qr5.uW9mv/Ty89y.RvUJ4lcHcbyCvV2Zp01W';
 
-// 在启动时使用环境变量中的密码哈希，如果没有则生成默认哈希
+// 获取管理员密码哈希 - 优先使用环境变量
+let ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || DEFAULT_ADMIN_PASSWORD_HASH;
+
+// 验证密码哈希格式是否有效（不验证具体密码，只检查格式）
+const validatePasswordHashFormat = (hash) => {
+  // bcrypt 哈希格式: $2a$, $2b$, or $2y$ 开头，长度约60字符
+  return hash && typeof hash === 'string' && hash.startsWith('$2') && hash.length >= 59;
+};
+
+// 在启动时验证密码哈希格式
 const initializePasswordHash = async () => {
-  try {
-    // 优先使用环境变量中的密码哈希
-    if (process.env.ADMIN_PASSWORD_HASH) {
-      ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
-      console.log('使用环境变量中的密码哈希');
-    } else {
-      // 环境变量未设置时，生成默认密码哈希（admin123）
-      ADMIN_PASSWORD_HASH = await bcrypt.hash('admin123', 10);
-      console.log('已生成新的密码哈希，默认密码: admin123');
-    }
-  } catch (error) {
-    console.error('密码哈希生成失败:', error);
-    process.exit(1);
+  if (!validatePasswordHashFormat(ADMIN_PASSWORD_HASH)) {
+    console.warn('当前密码哈希格式无效，使用默认哈希');
+    ADMIN_PASSWORD_HASH = DEFAULT_ADMIN_PASSWORD_HASH;
+  } else {
+    console.log('✅ 使用环境变量中的密码哈希');
   }
 };
 
@@ -470,30 +472,12 @@ if (HAS_FRONTEND_DIST) {
     changeOrigin: true,
     ws: true, // 支持 WebSocket（热更新需要）
     logLevel: 'warn',
-    pathRewrite: {
-      // 保留 RSC 查询参数
-      '^/': '/'
-    },
     onError: (err, req, res) => {
       console.error('Proxy error:', err.message);
       res.status(502).json({ 
         error: 'Frontend dev server not running',
         message: `Please start frontend: cd frontend && npm run dev`
       });
-    },
-    // 正确处理 Next.js 14 RSC 请求
-    onProxyReq: (proxyReq, req, res) => {
-      // 确保 RSC 请求的特殊头被正确传递
-      if (req.headers['next-action'] || req.query._rsc) {
-        proxyReq.setHeader('accept', '*/*');
-      }
-    },
-    onProxyRes: (proxyRes, req, res) => {
-      // 确保 RSC 响应的头被正确传递
-      if (req.query._rsc) {
-        // 保留所有来自 Next.js 的响应头
-        proxyRes.headers['x-proxy-by'] = 'kktools-backend';
-      }
     }
   });
   
