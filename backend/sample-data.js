@@ -121,7 +121,7 @@ module.exports = {
       },
     ],
   },
-  '卡卡学堂': {
+  'Starlight Academy': {
     filters: [
       { label: 'All', tag: 'All' },
       { label: 'Exclusive', tag: 'Exclusive' },
