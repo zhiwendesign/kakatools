@@ -25,10 +25,24 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     token TEXT UNIQUE NOT NULL,
     type TEXT DEFAULT 'admin',
+    ip_address TEXT,
+    access_key_code TEXT,
     created_at INTEGER NOT NULL,
     expires_at INTEGER
   )
 `);
+
+// 添加新列（如果不存在）
+try {
+  db.exec(`ALTER TABLE tokens ADD COLUMN ip_address TEXT`);
+} catch (e) {
+  // Column already exists, ignore
+}
+try {
+  db.exec(`ALTER TABLE tokens ADD COLUMN access_key_code TEXT`);
+} catch (e) {
+  // Column already exists, ignore
+}
 
 // Access keys table
 db.exec(`
@@ -88,6 +102,8 @@ db.exec(`
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_tokens_token ON tokens(token);
   CREATE INDEX IF NOT EXISTS idx_tokens_expires ON tokens(expires_at);
+  CREATE INDEX IF NOT EXISTS idx_tokens_access_key ON tokens(access_key_code);
+  CREATE INDEX IF NOT EXISTS idx_tokens_ip ON tokens(ip_address);
   CREATE INDEX IF NOT EXISTS idx_access_keys_code ON access_keys(code);
   CREATE INDEX IF NOT EXISTS idx_access_keys_expires ON access_keys(expires_at);
   CREATE INDEX IF NOT EXISTS idx_resources_category ON resources(category);
@@ -100,21 +116,30 @@ console.log('📦 Database initialized successfully');
 
 const tokenOps = {
   add: db.prepare(`
-    INSERT INTO tokens (token, type, created_at, expires_at) 
-    VALUES (@token, @type, @createdAt, @expiresAt)
+    INSERT INTO tokens (token, type, ip_address, access_key_code, created_at, expires_at) 
+    VALUES (@token, @type, @ipAddress, @accessKeyCode, @createdAt, @expiresAt)
   `),
   verify: db.prepare(`
     SELECT * FROM tokens 
     WHERE token = ? AND (expires_at IS NULL OR expires_at > ?)
   `),
   delete: db.prepare(`DELETE FROM tokens WHERE token = ?`),
+  deleteByAccessKey: db.prepare(`DELETE FROM tokens WHERE access_key_code = ? AND type = 'starlight'`),
+  findByAccessKey: db.prepare(`SELECT * FROM tokens WHERE access_key_code = ? AND type = 'starlight' AND (expires_at IS NULL OR expires_at > ?)`),
   cleanup: db.prepare(`DELETE FROM tokens WHERE expires_at IS NOT NULL AND expires_at < ?`),
 };
 
 const tokens = {
-  add(token, type = 'admin', expiresAt = null) {
+  add(token, type = 'admin', expiresAt = null, ipAddress = null, accessKeyCode = null) {
     try {
-      tokenOps.add.run({ token, type, createdAt: Date.now(), expiresAt });
+      tokenOps.add.run({ 
+        token, 
+        type, 
+        ipAddress, 
+        accessKeyCode,
+        createdAt: Date.now(), 
+        expiresAt 
+      });
       return true;
     } catch (error) {
       console.error('Error adding token:', error);
@@ -132,6 +157,20 @@ const tokens = {
   // 验证是否是管理员 token
   isAdmin(token) {
     return this.getType(token) === 'admin';
+  },
+  // 检查访问密钥是否已被其他 IP 使用
+  isAccessKeyInUse(accessKeyCode, currentIp) {
+    const existingTokens = tokenOps.findByAccessKey.all(accessKeyCode, Date.now());
+    if (existingTokens.length === 0) {
+      return false;
+    }
+    // 检查是否有其他 IP 在使用
+    const otherIpTokens = existingTokens.filter(t => t.ip_address !== currentIp);
+    return otherIpTokens.length > 0;
+  },
+  // 删除指定访问密钥的所有 token（用于强制下线）
+  deleteByAccessKey(accessKeyCode) {
+    return tokenOps.deleteByAccessKey.run(accessKeyCode).changes;
   },
   delete(token) {
     return tokenOps.delete.run(token).changes > 0;
@@ -368,6 +407,7 @@ setInterval(() => {
 module.exports = {
   db,
   tokens,
+  tokenOps, // 导出 tokenOps 供外部使用
   accessKeys,
   resources,
   filters,

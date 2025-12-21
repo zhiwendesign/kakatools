@@ -10,7 +10,7 @@ const compression = require('compression');
 const helmet = require('helmet');
 
 // Import database operations
-const { tokens, accessKeys, resources, filters } = require('./db');
+const { tokens, tokenOps, accessKeys, resources, filters } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 4200;
@@ -140,6 +140,16 @@ const generateToken = () => {
   return crypto.randomBytes(32).toString('hex');
 };
 
+// 获取客户端 IP 地址
+const getClientIp = (req) => {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+         req.headers['x-real-ip'] ||
+         req.connection?.remoteAddress ||
+         req.socket?.remoteAddress ||
+         req.ip ||
+         'unknown';
+};
+
 // ==================== Auth Routes ====================
 
 // Login Endpoint
@@ -155,7 +165,8 @@ app.post('/api/auth/login', async (req, res, next) => {
 
     if (isValidPassword) {
       const token = generateToken();
-      const stored = tokens.add(token, 'admin');
+      const clientIp = getClientIp(req);
+      const stored = tokens.add(token, 'admin', null, clientIp, null);
       
       if (!stored) {
         const error = new Error('无法保存登录状态');
@@ -298,8 +309,28 @@ app.post('/api/keys/verify', (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Access Key has expired' });
     }
 
+    // 获取客户端 IP
+    const clientIp = getClientIp(req);
+    
+    // 检查访问密钥是否已被其他 IP 使用
+    if (tokens.isAccessKeyInUse(key.code, clientIp)) {
+      return res.status(403).json({ 
+        success: false, 
+        message: '此访问密钥已在其他设备上使用，同一密钥只能在一台设备上登录' 
+      });
+    }
+
+    // 如果当前 IP 已有 token，先删除旧的（允许同一 IP 重新登录）
+    const existingTokens = tokenOps.findByAccessKey.all(key.code, Date.now());
+    const currentIpTokens = existingTokens.filter(t => t.ip_address === clientIp);
+    currentIpTokens.forEach(t => tokens.delete(t.token));
+
+    // 生成新的访问 token
     const accessToken = generateToken();
-    tokens.add(accessToken, 'starlight');
+    const keyExpiresAt = key.expires_at;
+    tokens.add(accessToken, 'starlight', keyExpiresAt, clientIp, key.code);
+
+    console.log(`Starlight access granted: Key ${key.code} for IP ${clientIp}`);
 
     res.json({
       success: true,
