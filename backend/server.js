@@ -6,6 +6,8 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
+const compression = require('compression');
+const helmet = require('helmet');
 
 // Import database operations
 const { tokens, accessKeys, resources, filters } = require('./db');
@@ -19,13 +21,65 @@ const IS_DEV = process.env.NODE_ENV !== 'production';
 const FRONTEND_DIST_PATH = path.join(__dirname, '../frontend/out');
 const HAS_FRONTEND_DIST = fs.existsSync(FRONTEND_DIST_PATH);
 
-// Middleware - 统一部署模式下放宽 CORS
+// ==================== Middleware ====================
+
+// 安全头设置（生产环境）
+if (!IS_DEV) {
+  app.use(helmet({
+    contentSecurityPolicy: false, // 允许内联脚本（Next.js 需要）
+    crossOriginEmbedderPolicy: false,
+  }));
+}
+
+// 响应压缩
+app.use(compression());
+
+// CORS 配置
 app.use(cors({
   origin: true,
   credentials: true
 }));
-// 增加请求体大小限制，解决创建卡片保存失败问题
+
+// 请求体解析 - 增加大小限制
 app.use(bodyParser.json({ limit: '5mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '5mb' }));
+
+// 请求日志中间件
+app.use((req, res, next) => {
+  const start = Date.now();
+  const originalSend = res.send;
+  
+  res.send = function(data) {
+    const duration = Date.now() - start;
+    const logLevel = res.statusCode >= 400 ? 'ERROR' : 'INFO';
+    console.log(`[${new Date().toISOString()}] ${logLevel} ${req.method} ${req.path} ${res.statusCode} ${duration}ms`);
+    originalSend.call(this, data);
+  };
+  
+  next();
+});
+
+// 统一错误处理中间件
+const errorHandler = (err, req, res, next) => {
+  console.error('[ERROR]', err);
+  
+  const statusCode = err.statusCode || 500;
+  const message = err.message || '服务器内部错误';
+  
+  res.status(statusCode).json({
+    success: false,
+    message: IS_DEV ? message : '服务器错误',
+    ...(IS_DEV && { stack: err.stack })
+  });
+};
+
+// 404 处理
+app.use('/api/*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'API 端点不存在'
+  });
+});
 
 // Serve static data files
 app.use('/data', express.static(path.join(__dirname, 'data')));
@@ -89,88 +143,85 @@ const generateToken = () => {
 // ==================== Auth Routes ====================
 
 // Login Endpoint
-app.post('/api/auth/login', async (req, res) => {
-  const { password } = req.body;
-
-  if (!password) {
-    return res.status(400).json({ success: false, message: '密码不能为空' });
-  }
-
+app.post('/api/auth/login', async (req, res, next) => {
   try {
+    const { password } = req.body;
+
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ success: false, message: '密码不能为空' });
+    }
+
     const isValidPassword = await bcrypt.compare(password, ADMIN_PASSWORD_HASH);
 
     if (isValidPassword) {
       const token = generateToken();
-      // Store token in SQLite and verify it was stored
       const stored = tokens.add(token, 'admin');
       
       if (!stored) {
-        console.error('Failed to store token in database');
-        return res.status(500).json({ success: false, message: '服务器错误：无法保存登录状态' });
+        const error = new Error('无法保存登录状态');
+        error.statusCode = 500;
+        return next(error);
       }
       
-      // Verify token was actually stored
       const verified = tokens.verify(token);
-      console.log(`Login successful. Token: ${token.substring(0, 8)}..., Stored: ${stored}, Verified: ${verified}`);
-      
       if (!verified) {
-        console.error('Token stored but verification failed!');
-        return res.status(500).json({ success: false, message: '服务器错误：登录状态验证失败' });
+        const error = new Error('登录状态验证失败');
+        error.statusCode = 500;
+        return next(error);
       }
       
       res.json({ success: true, token });
     } else {
-      console.log('Login failed: Incorrect password');
       res.status(401).json({ success: false, message: '密码错误' });
     }
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ success: false, message: '服务器错误' });
+    next(error);
   }
 });
 
 // Verify Token Endpoint
-app.post('/api/auth/verify', (req, res) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+app.post('/api/auth/verify', (req, res, next) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-  if (token && tokens.verify(token)) {
-    res.json({ success: true });
-  } else {
-    res.status(401).json({ success: false, message: 'Invalid token' });
+    if (token && tokens.verify(token)) {
+      res.json({ success: true });
+    } else {
+      res.status(401).json({ success: false, message: 'Invalid token' });
+    }
+  } catch (error) {
+    next(error);
   }
 });
 
 // Logout Endpoint
-app.post('/api/auth/logout', (req, res) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+app.post('/api/auth/logout', (req, res, next) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-  if (token) {
-    tokens.delete(token);
+    if (token) {
+      tokens.delete(token);
+    }
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
   }
-  res.json({ success: true });
 });
 
 // Generate new password hash (Admin Only)
-app.post('/api/auth/generate-password-hash', async (req, res) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token || !tokens.verify(token)) {
-    return res.status(401).json({ success: false, message: 'Unauthorized: Admin access required' });
-  }
-
-  const { newPassword } = req.body;
-
-  if (!newPassword || newPassword.length < 6) {
-    return res.status(400).json({
-      success: false,
-      message: '新密码长度至少6位'
-    });
-  }
-
+app.post('/api/auth/generate-password-hash', requireAuth, async (req, res, next) => {
   try {
+    const { newPassword } = req.body;
+
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: '新密码长度至少6位'
+      });
+    }
+
     const newHash = await bcrypt.hash(newPassword, 10);
     console.log('新的密码哈希已生成（请将其设置为环境变量 ADMIN_PASSWORD_HASH）:');
     console.log(newHash);
@@ -182,8 +233,7 @@ app.post('/api/auth/generate-password-hash', async (req, res) => {
       note: '请将生成的哈希值设置为环境变量 ADMIN_PASSWORD_HASH'
     });
   } catch (error) {
-    console.error('Password hash generation error:', error);
-    res.status(500).json({ success: false, message: '密码哈希生成失败' });
+    next(error);
   }
 });
 
@@ -191,110 +241,140 @@ app.post('/api/auth/generate-password-hash', async (req, res) => {
 
 // Auth middleware for admin routes
 const requireAuth = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token || !tokens.verify(token)) {
-    return res.status(401).json({ success: false, message: 'Unauthorized: Admin access required' });
+    if (!token || !tokens.verify(token)) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: Admin access required' });
+    }
+    next();
+  } catch (error) {
+    next(error);
   }
-  next();
 };
 
 // Generate Access Key (Admin Only)
-app.post('/api/keys/generate', requireAuth, (req, res) => {
-  const { durationInDays = 30, username = 'Anonymous' } = req.body;
+app.post('/api/keys/generate', requireAuth, (req, res, next) => {
+  try {
+    const { durationInDays = 30, username = 'Anonymous' } = req.body;
 
-  const code = crypto.randomBytes(16).toString('hex').toUpperCase();
-  
-  // Store in SQLite
-  const newKey = accessKeys.add(code, username, durationInDays);
+    if (durationInDays && (typeof durationInDays !== 'number' || durationInDays < 1 || durationInDays > 365)) {
+      return res.status(400).json({ success: false, message: '有效期必须在1-365天之间' });
+    }
 
-  if (newKey) {
-    console.log(`Generated Key: ${code} for ${username} (Expires in ${durationInDays} days)`);
-    res.json({ success: true, key: newKey });
-  } else {
-    res.status(500).json({ success: false, message: 'Failed to generate key' });
+    const code = crypto.randomBytes(16).toString('hex').toUpperCase();
+    const newKey = accessKeys.add(code, username || 'Anonymous', durationInDays || 30);
+
+    if (newKey) {
+      res.json({ success: true, key: newKey });
+    } else {
+      const error = new Error('Failed to generate key');
+      error.statusCode = 500;
+      return next(error);
+    }
+  } catch (error) {
+    next(error);
   }
 });
 
 // Verify Access Key (Public)
-app.post('/api/keys/verify', (req, res) => {
-  const { code } = req.body;
+app.post('/api/keys/verify', (req, res, next) => {
+  try {
+    const { code } = req.body;
 
-  if (!code) {
-    return res.status(400).json({ success: false, message: 'Key is required' });
-  }
-
-  const key = accessKeys.findByCode(code);
-
-  if (!key) {
-    return res.status(401).json({ success: false, message: 'Invalid Access Key' });
-  }
-
-  if (accessKeys.isExpired(key)) {
-    accessKeys.delete(code);
-    return res.status(401).json({ success: false, message: 'Access Key has expired' });
-  }
-
-  // Generate access token and store in SQLite
-  const accessToken = generateToken();
-  tokens.add(accessToken, 'starlight');
-
-  res.json({
-    success: true,
-    message: 'Access Granted',
-    token: accessToken,
-    keyInfo: {
-      code: key.code,
-      username: key.username,
-      createdAt: key.created_at,
-      expiresAt: key.expires_at,
-      duration: key.duration
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ success: false, message: 'Key is required' });
     }
-  });
+
+    const key = accessKeys.findByCode(code.trim());
+
+    if (!key) {
+      return res.status(401).json({ success: false, message: 'Invalid Access Key' });
+    }
+
+    if (accessKeys.isExpired(key)) {
+      accessKeys.delete(code);
+      return res.status(401).json({ success: false, message: 'Access Key has expired' });
+    }
+
+    const accessToken = generateToken();
+    tokens.add(accessToken, 'starlight');
+
+    res.json({
+      success: true,
+      message: 'Access Granted',
+      token: accessToken,
+      keyInfo: {
+        code: key.code,
+        username: key.username,
+        createdAt: key.created_at,
+        expiresAt: key.expires_at,
+        duration: key.duration
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // List Access Keys (Admin Only)
-app.get('/api/keys', requireAuth, (req, res) => {
-  const keys = accessKeys.getAll();
-  res.json({ success: true, keys });
+app.get('/api/keys', requireAuth, (req, res, next) => {
+  try {
+    const keys = accessKeys.getAll();
+    res.json({ success: true, keys });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Revoke Access Key (Admin Only)
-app.delete('/api/keys/:code', requireAuth, (req, res) => {
-  const { code } = req.params;
-  const deleted = accessKeys.delete(code);
+app.delete('/api/keys/:code', requireAuth, (req, res, next) => {
+  try {
+    const { code } = req.params;
+    const deleted = accessKeys.delete(code);
 
-  if (!deleted) {
-    return res.status(404).json({ success: false, message: 'Key not found' });
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Key not found' });
+    }
+
+    res.json({ success: true, message: 'Key revoked' });
+  } catch (error) {
+    next(error);
   }
-
-  res.json({ success: true, message: 'Key revoked' });
 });
 
 // Rename Access Key (Admin Only)
-app.put('/api/keys/:code', requireAuth, (req, res) => {
-  const { code } = req.params;
-  const { name } = req.body;
+app.put('/api/keys/:code', requireAuth, (req, res, next) => {
+  try {
+    const { code } = req.params;
+    const { name } = req.body;
 
-  const key = accessKeys.updateName(code, name);
-  
-  if (!key) {
-    return res.status(404).json({ success: false, message: 'Key not found' });
-  }
-
-  res.json({ 
-    success: true, 
-    message: 'Key renamed', 
-    key: {
-      code: key.code,
-      username: key.username,
-      name: key.name,
-      duration: key.duration,
-      createdAt: key.created_at,
-      expiresAt: key.expires_at
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'Name is required' });
     }
-  });
+
+    const key = accessKeys.updateName(code, name.trim());
+    
+    if (!key) {
+      return res.status(404).json({ success: false, message: 'Key not found' });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Key renamed', 
+      key: {
+        code: key.code,
+        username: key.username,
+        name: key.name,
+        duration: key.duration,
+        createdAt: key.created_at,
+        expiresAt: key.expires_at
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // ==================== Resources Routes ====================
@@ -303,116 +383,156 @@ app.put('/api/keys/:code', requireAuth, (req, res) => {
 const ADMIN_ONLY_CATEGORIES = ['Learning'];
 
 // Get resources by category
-app.get('/api/resources/:category', (req, res) => {
-  const { category } = req.params;
-  
-  // 检查是否是管理员专属分类
-  if (ADMIN_ONLY_CATEGORIES.includes(category)) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+app.get('/api/resources/:category', (req, res, next) => {
+  try {
+    const { category } = req.params;
     
-    // 只有管理员才能访问
-    if (!token || !tokens.isAdmin(token)) {
-      return res.status(403).json({ 
-        success: false, 
-        message: '此分类仅管理员可访问',
-        filters: [],
-        resources: []
-      });
+    // 检查是否是管理员专属分类
+    if (ADMIN_ONLY_CATEGORIES.includes(category)) {
+      const authHeader = req.headers['authorization'];
+      const token = authHeader && authHeader.split(' ')[1];
+      
+      if (!token || !tokens.isAdmin(token)) {
+        return res.status(403).json({ 
+          success: false, 
+          message: '此分类仅管理员可访问',
+          filters: [],
+          resources: []
+        });
+      }
     }
+    
+    const categoryResources = resources.getByCategory(category);
+    const categoryFilters = filters.getByCategory(category);
+    
+    res.json({
+      filters: categoryFilters,
+      resources: categoryResources
+    });
+  } catch (error) {
+    next(error);
   }
-  
-  const categoryResources = resources.getByCategory(category);
-  const categoryFilters = filters.getByCategory(category);
-  
-  res.json({
-    filters: categoryFilters,
-    resources: categoryResources
-  });
 });
 
 // Get all resources
-app.get('/api/resources', (req, res) => {
-  const allResources = resources.getAll();
-  const allFilters = filters.getAll();
-  
-  res.json({
-    filters: allFilters,
-    resources: allResources
-  });
+app.get('/api/resources', (req, res, next) => {
+  try {
+    const allResources = resources.getAll();
+    const allFilters = filters.getAll();
+    
+    res.json({
+      filters: allFilters,
+      resources: allResources
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Add/Update resource (Admin Only)
-app.post('/api/resources', requireAuth, (req, res) => {
-  const resource = req.body;
-  
-  if (!resource.id || !resource.title || !resource.category) {
-    return res.status(400).json({ success: false, message: 'Missing required fields: id, title, category' });
-  }
-  
-  const success = resources.upsert(resource);
-  
-  if (success) {
-    res.json({ success: true, resource: resources.getById(resource.id) });
-  } else {
-    res.status(500).json({ success: false, message: 'Failed to save resource' });
+app.post('/api/resources', requireAuth, (req, res, next) => {
+  try {
+    const resource = req.body;
+    
+    if (!resource.id || !resource.title || !resource.category) {
+      return res.status(400).json({ success: false, message: 'Missing required fields: id, title, category' });
+    }
+    
+    const success = resources.upsert(resource);
+    
+    if (success) {
+      res.json({ success: true, resource: resources.getById(resource.id) });
+    } else {
+      const error = new Error('Failed to save resource');
+      error.statusCode = 500;
+      return next(error);
+    }
+  } catch (error) {
+    next(error);
   }
 });
 
 // Delete resource (Admin Only)
-app.delete('/api/resources/:id', requireAuth, (req, res) => {
-  const { id } = req.params;
-  const deleted = resources.delete(id);
-  
-  if (deleted) {
-    res.json({ success: true, message: 'Resource deleted' });
-  } else {
-    res.status(404).json({ success: false, message: 'Resource not found' });
+app.delete('/api/resources/:id', requireAuth, (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const deleted = resources.delete(id);
+    
+    if (deleted) {
+      res.json({ success: true, message: 'Resource deleted' });
+    } else {
+      res.status(404).json({ success: false, message: 'Resource not found' });
+    }
+  } catch (error) {
+    next(error);
   }
 });
 
 // ==================== Filters Routes ====================
 
 // Get filters by category
-app.get('/api/filters/:category', (req, res) => {
-  const { category } = req.params;
-  const categoryFilters = filters.getByCategory(category);
-  res.json({ filters: categoryFilters });
+app.get('/api/filters/:category', (req, res, next) => {
+  try {
+    const { category } = req.params;
+    const categoryFilters = filters.getByCategory(category);
+    res.json({ filters: categoryFilters });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Add filter (Admin Only)
-app.post('/api/filters', requireAuth, (req, res) => {
-  const { category, label, tag } = req.body;
-  
-  if (!category || !label || !tag) {
-    return res.status(400).json({ success: false, message: 'Missing required fields: category, label, tag' });
-  }
-  
-  const success = filters.upsert(category, label, tag);
-  
-  if (success) {
-    res.json({ success: true, filters: filters.getByCategory(category) });
-  } else {
-    res.status(500).json({ success: false, message: 'Failed to save filter' });
+app.post('/api/filters', requireAuth, (req, res, next) => {
+  try {
+    const { category, label, tag } = req.body;
+    
+    if (!category || !label || !tag) {
+      return res.status(400).json({ success: false, message: 'Missing required fields: category, label, tag' });
+    }
+    
+    const success = filters.upsert(category, label, tag);
+    
+    if (success) {
+      res.json({ success: true, filters: filters.getByCategory(category) });
+    } else {
+      const error = new Error('Failed to save filter');
+      error.statusCode = 500;
+      return next(error);
+    }
+  } catch (error) {
+    next(error);
   }
 });
 
 // Delete filter (Admin Only)
-app.delete('/api/filters/:category/:tag', requireAuth, (req, res) => {
-  const { category, tag } = req.params;
-  const deleted = filters.delete(category, tag);
-  
-  if (deleted) {
-    res.json({ success: true, message: 'Filter deleted' });
-  } else {
-    res.status(404).json({ success: false, message: 'Filter not found' });
+app.delete('/api/filters/:category/:tag', requireAuth, (req, res, next) => {
+  try {
+    const { category, tag } = req.params;
+    const deleted = filters.delete(category, tag);
+    
+    if (deleted) {
+      res.json({ success: true, message: 'Filter deleted' });
+    } else {
+      res.status(404).json({ success: false, message: 'Filter not found' });
+    }
+  } catch (error) {
+    next(error);
   }
 });
 
 // ==================== Health Check ====================
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), database: 'sqlite' });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(), 
+    database: 'sqlite',
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  });
 });
+
+// 错误处理中间件（必须在所有路由之后）
+app.use(errorHandler);
 
 // ==================== Frontend Serving ====================
 

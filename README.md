@@ -277,10 +277,12 @@ pm2 stop kktools    # 停止服务
 - `POST /api/auth/login` - 管理员登录
 - `POST /api/auth/verify` - 验证 Token
 - `POST /api/auth/logout` - 退出登录
+- `POST /api/auth/generate-password-hash` - 生成新密码哈希（需认证）
 
 ### 资源
 
 - `GET /api/resources/:category` - 获取分类资源
+  - 管理员专属分类（如 Learning）需要认证
 - `GET /api/resources` - 获取所有资源
 - `POST /api/resources` - 添加/更新资源（需认证）
 - `DELETE /api/resources/:id` - 删除资源（需认证）
@@ -296,20 +298,55 @@ pm2 stop kktools    # 停止服务
 - `POST /api/keys/verify` - 验证访问密钥
 - `GET /api/keys` - 获取所有密钥（需认证）
 - `POST /api/keys/generate` - 生成新密钥（需认证）
+- `PUT /api/keys/:code` - 重命名密钥（需认证）
 - `DELETE /api/keys/:code` - 撤销密钥（需认证）
+
+### 健康检查
+
+- `GET /api/health` - 服务器健康状态（包含运行时间和内存使用）
 
 ## 🗄️ 数据库
 
 使用 **better-sqlite3** 存储数据：
 
 - `tokens` - 登录 Token（管理员和 Starlight 访问）
+  - 自动清理过期 Token（每小时）
 - `access_keys` - Starlight 访问密钥
+  - 自动清理过期密钥（每小时）
 - `resources` - 资源数据
   - `content_type` - 资源类型（'link' 或 'document'）
   - `content` - 文档内容（当 content_type 为 'document' 时）
 - `filters` - 过滤菜单
 
 数据库文件位于 `backend/data/kktools.db`
+
+### 数据库特性
+
+- **WAL 模式**：启用 Write-Ahead Logging 提升性能
+- **自动索引**：关键字段自动创建索引
+- **自动清理**：定期清理过期 Token 和访问密钥
+- **事务支持**：批量操作使用事务保证数据一致性
+
+## 🚀 后端服务特性
+
+### 性能优化
+
+- **响应压缩**：自动压缩 HTTP 响应，减少传输大小
+- **请求日志**：记录所有请求的详细信息（方法、路径、状态码、响应时间）
+- **健康检查**：提供详细的服务器健康状态信息
+
+### 安全性
+
+- **安全 HTTP 头**：使用 Helmet 设置安全头（生产环境）
+- **输入验证**：所有 API 端点都有输入验证
+- **统一错误处理**：统一的错误响应格式，生产环境隐藏敏感信息
+- **CORS 配置**：灵活的跨域资源共享配置
+
+### 可维护性
+
+- **统一错误处理**：所有路由使用统一的错误处理中间件
+- **请求日志**：便于调试和监控
+- **代码组织**：清晰的代码结构和注释
 
 ## 🌐 生产部署
 
@@ -372,6 +409,9 @@ NODE_ENV=production
 - better-sqlite3 (SQLite 数据库)
 - bcrypt (密码加密)
 - dotenv (环境变量管理)
+- compression (响应压缩)
+- helmet (安全 HTTP 头)
+- http-proxy-middleware (开发模式代理)
 
 ## 📦 项目特点
 
@@ -380,9 +420,11 @@ NODE_ENV=production
 - ✅ **静态导出** - 前端可静态部署
 - ✅ **SQLite 数据库** - 轻量级，无需额外数据库服务
 - ✅ **Markdown 文档** - 支持富文本文档展示
-- ✅ **内容保护** - 文档查看时禁止复制
+- ✅ **内容保护** - 文档查看时禁止复制（管理员可复制）
 - ✅ **权限控制** - 管理员和访问密钥双重权限
 - ✅ **响应式设计** - 适配各种设备
+- ✅ **性能优化** - 响应压缩、请求日志、错误处理
+- ✅ **安全增强** - 安全 HTTP 头、输入验证、统一错误处理
 
 ## 🎯 使用示例
 
