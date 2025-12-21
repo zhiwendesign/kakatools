@@ -1,4 +1,4 @@
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 async function generatePasswordHash() {
   const password = 'zhiwen@987';
