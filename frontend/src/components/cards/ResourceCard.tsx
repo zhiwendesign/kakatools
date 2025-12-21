@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { Resource } from '@/types';
 import { Icon } from '@/components/ui';
+import { DocumentModal } from '@/components/modals/DocumentModal';
 
 interface ResourceCardProps {
   item: Resource;
@@ -9,8 +11,19 @@ interface ResourceCardProps {
 }
 
 export function ResourceCard({ item, onEdit }: ResourceCardProps) {
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const isDocument = item.contentType === 'document' && item.content;
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (isDocument) {
+      e.preventDefault();
+      setShowDocumentModal(true);
+    }
+  };
+
   return (
-    <div className="group relative flex flex-col bg-surface border border-border rounded-2xl overflow-hidden transition-all duration-500 hover:border-accent/50 hover:shadow-lg hover:-translate-y-1">
+    <>
+      <div className="group relative flex flex-col bg-surface border border-border rounded-2xl overflow-hidden transition-all duration-500 hover:border-accent/50 hover:shadow-lg hover:-translate-y-1">
       {/* Image Section */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-surfaceHighlight">
         <img
@@ -68,15 +81,34 @@ export function ResourceCard({ item, onEdit }: ResourceCardProps) {
         </div>
       </div>
 
-      {/* Link Overlay */}
-      <a
-        href={item.link}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute inset-0 z-10"
-        aria-label={`View ${item.title}`}
-      />
+      {/* Link Overlay or Document Click Handler */}
+      {isDocument ? (
+        <div
+          onClick={handleClick}
+          className="absolute inset-0 z-10 cursor-pointer"
+          aria-label={`View ${item.title}`}
+        />
+      ) : (
+        <a
+          href={item.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute inset-0 z-10"
+          aria-label={`View ${item.title}`}
+        />
+      )}
+
     </div>
+
+    {/* Document Modal */}
+    {isDocument && (
+      <DocumentModal
+        isOpen={showDocumentModal}
+        onClose={() => setShowDocumentModal(false)}
+        resource={item}
+      />
+    )}
+    </>
   );
 }
 

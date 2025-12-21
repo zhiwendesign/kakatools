@@ -28,6 +28,7 @@ export default function HomePage() {
     error,
     getFilteredResources,
     getAvailableTags,
+    reload: reloadResources,
   } = useResources({ authToken: isAuthenticated ? token : null });
 
   // Header config hook
@@ -39,6 +40,37 @@ export default function HomePage() {
 
   // UI State
   const [activeCategory, setActiveCategory] = useState<CategoryType>('AiCC');
+
+  // 从 URL 参数或 sessionStorage 读取分类（仅在客户端）
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // 检查 sessionStorage 中是否有切换分类的标记
+      const switchToCategory = sessionStorage.getItem('switchToCategory');
+      if (switchToCategory && ['AiCC', 'UXLib', 'Learning', 'Starlight Academy'].includes(switchToCategory)) {
+        setActiveCategory(switchToCategory as CategoryType);
+        sessionStorage.removeItem('switchToCategory');
+      } else {
+        // 检查 URL 参数
+        const params = new URLSearchParams(window.location.search);
+        const categoryParam = params.get('category');
+        if (categoryParam && ['AiCC', 'UXLib', 'Learning', 'Starlight Academy'].includes(categoryParam)) {
+          setActiveCategory(categoryParam as CategoryType);
+        }
+      }
+
+      // 监听自定义事件，用于从配置页面跳转时切换分类
+      const handleSwitchCategory = (event: CustomEvent) => {
+        if (event.detail && ['AiCC', 'UXLib', 'Learning', 'Starlight Academy'].includes(event.detail)) {
+          setActiveCategory(event.detail as CategoryType);
+        }
+      };
+
+      window.addEventListener('switchCategory', handleSwitchCategory as EventListener);
+      return () => {
+        window.removeEventListener('switchCategory', handleSwitchCategory as EventListener);
+      };
+    }
+  }, []);
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState('');
@@ -80,6 +112,25 @@ export default function HomePage() {
       setActiveCategory('AiCC');
     }
   }, [isAuthenticated, activeCategory]);
+
+  // Reload resources when page becomes visible (user returns from config page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        reloadResources();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [reloadResources]);
+
+  // Reload resources when authentication state changes
+  useEffect(() => {
+    reloadResources();
+  }, [isAuthenticated, reloadResources]);
 
   // Get filtered resources
   const filteredResources = useMemo(() => {

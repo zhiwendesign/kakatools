@@ -47,7 +47,14 @@ export function Header({
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-border">
       <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 cursor-pointer">
+        <Link 
+          href="/" 
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={(e) => {
+            e.preventDefault();
+            setActiveCategory('AiCC');
+          }}
+        >
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-black/10 overflow-hidden">
             {headerConfig.avatarImage ? (
               <img

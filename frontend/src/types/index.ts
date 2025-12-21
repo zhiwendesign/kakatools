@@ -8,6 +8,8 @@ export interface Resource {
   imageUrl: string;
   link: string;
   featured?: boolean;
+  contentType?: 'link' | 'document'; // 资源类型：链接或文档
+  content?: string; // 文档内容（当 contentType 为 'document' 时使用）
 }
 
 export interface Filter {

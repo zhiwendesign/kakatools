@@ -12,24 +12,31 @@ kktools/
 │   │   │   ├── page.tsx   # 首页
 │   │   │   └── config/    # 配置管理页面
 │   │   ├── components/    # React 组件
+│   │   │   ├── cards/     # 资源卡片组件
+│   │   │   ├── config/    # 配置管理组件
+│   │   │   │   └── MarkdownEditor.tsx  # Markdown 编辑器
+│   │   │   ├── modals/    # 弹窗组件
+│   │   │   │   └── DocumentModal.tsx   # 文档展示弹窗
+│   │   │   ├── layout/    # 布局组件
+│   │   │   └── ui/        # UI 基础组件
 │   │   ├── hooks/         # 自定义 Hooks
 │   │   ├── lib/           # API 和工具函数
 │   │   ├── types/         # TypeScript 类型
 │   │   └── constants/     # 常量配置
 │   ├── public/            # 静态资源
 │   ├── out/               # 构建输出（生产部署用）
-│   ├── .env.development   # 开发环境配置
-│   └── .env.production    # 生产环境配置
+│   └── next.config.js     # Next.js 配置
 │
 ├── backend/               # Express 后端服务
-│   ├── server.js          # 主服务器（含静态文件服务）
-│   ├── db.js              # SQLite 数据库模块
-│   ├── import-data.js     # 数据导入脚本
-│   └── data/              # 数据库文件
-│       └── kktools.db     # SQLite 数据库
+│   ├── server.js         # 主服务器（含静态文件服务）
+│   ├── db.js             # SQLite 数据库模块
+│   ├── import-data.js    # 数据导入脚本
+│   ├── .env              # 环境变量配置
+│   └── data/             # 数据库文件
+│       └── kktools.db    # SQLite 数据库
 │
-├── ecosystem.config.js    # PM2 配置文件
-├── package.json           # 根目录脚本
+├── ecosystem.config.js   # PM2 配置文件
+├── package.json          # 根目录脚本
 └── README.md
 ```
 
@@ -38,7 +45,7 @@ kktools/
 ### 1. 安装依赖
 
 ```bash
-# 方式一：使用根目录脚本
+# 方式一：使用根目录脚本（推荐）
 npm run install:all
 
 # 方式二：分别安装
@@ -50,11 +57,12 @@ cd ../frontend && npm install
 
 #### 后端配置
 
-复制示例配置文件并修改：
+创建并编辑 `backend/.env`：
 
 ```bash
 cd backend
 cp env.example .env
+# 编辑 .env 文件
 ```
 
 配置项说明（`backend/.env`）：
@@ -63,38 +71,30 @@ cp env.example .env
 # 服务器端口
 PORT=4200
 
-# 前端地址（用于 CORS）
-FRONTEND_URL=http://localhost:3000
-
-# 管理员密码哈希（默认密码: admin123）
-ADMIN_PASSWORD_HASH=$2b$10$fqSNTFsk5LB9SxUC0qr5.uW9mv/Ty89y.RvUJ4lcHcbyCvV2Zp01W
+# 管理员密码哈希（使用 bcrypt 加密）
+# 默认密码: zhiwen@987
+ADMIN_PASSWORD_HASH=$2b$10$PXIeBechPrXGat12GAjJI.UQiXzJrjFjYxcfuKw.Whd/KsBABsLGW
 
 # 数据库路径（可选，默认 ./data/kktools.db）
 # DB_PATH=./data/kktools.db
 ```
 
-#### 前端配置
-
-前端已预置环境变量文件：
-
-- `.env.development` - 开发环境（默认 `http://localhost:4200`）
-- `.env.production` - 生产环境（默认 `https://k.uxlib.cn`）
-
-**修改配置：**
+**生成新密码哈希：**
 
 ```bash
-cd frontend
-
-# 开发环境 - 直接编辑 .env.development
-# 生产环境 - 编辑 .env.production 或创建 .env.production.local 覆盖
+cd backend
+node generate-hash.js your-password
+# 将输出的哈希值复制到 .env 的 ADMIN_PASSWORD_HASH
 ```
+
+#### 前端配置
+
+前端已预置环境变量，通常无需修改：
 
 ```env
 # 后端 API 地址
 NEXT_PUBLIC_API_URL=http://localhost:4200
 ```
-
-> 💡 提示：`.env.local` 和 `.env.*.local` 文件不会被提交到 Git，适合存放敏感配置
 
 ### 3. 初始化数据（首次运行）
 
@@ -151,7 +151,7 @@ pm2 start ecosystem.config.js
 
 # 常用命令
 pm2 status          # 查看状态
-pm2 logs kktools    # 查看日志
+pm2 logs kktools     # 查看日志
 pm2 restart kktools # 重启服务
 pm2 stop kktools    # 停止服务
 ```
@@ -160,47 +160,115 @@ pm2 stop kktools    # 停止服务
 
 ### 默认密码
 
-- **密码**: `admin123`
+- **密码**: `zhiwen@987`
 
 ### 修改管理员密码
 
-1. 登录管理后台
-2. 或使用 API 生成新密码哈希：
+1. 生成新密码哈希：
+   ```bash
+   cd backend
+   node generate-hash.js your-new-password
+   ```
 
-```bash
-# 调用 API 生成新密码哈希
-curl -X POST http://localhost:4200/api/auth/generate-password-hash \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{"newPassword": "your-new-password"}'
-```
+2. 将输出的哈希值更新到 `backend/.env` 的 `ADMIN_PASSWORD_HASH`
 
-3. 将返回的哈希值更新到 `backend/.env` 的 `ADMIN_PASSWORD_HASH`
-4. 重启后端服务
+3. 重启后端服务
 
 ## ✨ 功能特性
 
 ### 前台功能
 
-- 🤖 **AiCC** - AI 工具集合（ChatGPT、Claude、Midjourney 等）
+- 🤖 **AiCC** - AI 工具集合
+  - 副标题：探索AI绘画模型和ComfyUI资料集合丨欢迎合作交流微信🛰️XingYueAIArt
+  
 - 🎨 **UXLib** - UI/UX 设计资源
-- 📚 **Learning** - 学习资料（公开访问）
-- ⭐ **Starlight Academy** - 付费内容专区（需访问密钥或管理员权限）
+  - 副标题：跟我学习更多UI/UX知识丨欢迎合作交流微信🛰️XingYueAIArt
+  
+- 📚 **Learning** - 学习资料（管理员专属）
+  - 副标题：学习资源与教程集合丨欢迎合作交流微信🛰️XingYueAIArt
+  
+- ⭐ **Starlight Academy** - 付费内容专区
+  - 副标题：愿大家像星星一样散发着光芒，有无限可能
+  - 需要访问密钥或管理员权限
 
 ### 后台功能（需管理员登录）
 
 - 📝 **资源管理** - 添加、编辑、删除资源卡片
-- 🏷️ **标签管理** - 管理各分类的过滤标签
+  - 支持链接类型：填写 URL 进行跳转
+  - 支持文档类型：直接编写 Markdown 文档，点击卡片弹窗展示
+  
+- 🏷️ **菜单管理** - 管理各分类的过滤菜单（原标签管理）
+  - 为每个分类配置过滤菜单项
+  - 支持菜单的显示名称和值
+  
 - 🔑 **密钥管理** - 生成和管理 Starlight 访问密钥
+  - 设置密钥有效期
+  - 查看所有密钥和使用情况
+  
 - ⚙️ **头部配置** - 自定义 Logo、标题、联系图片
+  - 上传头像图片
+  - 自定义标题文字
+  - 配置合作交流图片
+
+### 文档功能（新增）
+
+- 📄 **Markdown 编辑器**
+  - 工具栏快捷按钮（标题、粗体、斜体、链接、代码、列表、引用、图片）
+  - 快捷键支持（Ctrl+B、Ctrl+I、Ctrl+K 等）
+  - 实时字符计数
+  - 语法帮助提示
+  
+- 🖼️ **文档展示**
+  - 弹窗展示完整文档内容
+  - 支持 Markdown 语法渲染（标题、粗体、斜体、代码、链接、列表、引用、表格、分割线）
+  - 图片点击放大查看
+  - 响应式设计，支持滚动查看
+  
+- 🔒 **内容保护**
+  - 禁止复制文本
+  - 禁止右键菜单
+  - 禁止拖拽图片
+  - 禁止文本选择
+
+### 交互优化
+
+- 🏠 **Logo 点击返回**
+  - 点击头部 Logo/标题自动返回 AiCC 分类
+  - 从配置页面点击 Logo 跳转到首页并切换到 AiCC
+  
+- 🔄 **数据同步**
+  - 添加/删除/编辑资源后自动刷新
+  - 跨页面数据同步
+  - 认证状态变化时自动更新数据
 
 ### 权限说明
 
 | 用户类型 | AiCC | UXLib | Learning | Starlight |
 |---------|------|-------|----------|-----------|
-| 游客 | ✅ | ✅ | ✅ | ❌ |
-| Starlight Key | ✅ | ✅ | ✅ | ✅ |
+| 游客 | ✅ | ✅ | ❌ | ❌ |
+| Starlight Key | ✅ | ✅ | ❌ | ✅ |
 | 管理员 | ✅ | ✅ | ✅ | ✅ |
+
+## 📝 Markdown 支持
+
+### 支持的语法
+
+- **标题**: `# H1` 到 `###### H6`
+- **文本格式**: `**粗体**`、`*斜体*`
+- **代码**: `` `行内代码` ``、` ```代码块``` ``
+- **链接**: `[文本](URL)`
+- **图片**: `![描述](图片URL)` - 点击可放大查看
+- **列表**: `- 无序列表`、`1. 有序列表`
+- **引用**: `> 引用内容`
+- **表格**: Markdown 表格语法
+- **分割线**: `---` 或 `***`
+
+### 编辑器功能
+
+- 工具栏快捷按钮
+- 快捷键支持
+- 实时字符计数
+- 语法帮助提示
 
 ## 🔧 API 端点
 
@@ -213,10 +281,11 @@ curl -X POST http://localhost:4200/api/auth/generate-password-hash \
 ### 资源
 
 - `GET /api/resources/:category` - 获取分类资源
+- `GET /api/resources` - 获取所有资源
 - `POST /api/resources` - 添加/更新资源（需认证）
 - `DELETE /api/resources/:id` - 删除资源（需认证）
 
-### 过滤器
+### 过滤器（菜单）
 
 - `GET /api/filters/:category` - 获取分类过滤器
 - `POST /api/filters` - 添加过滤器（需认证）
@@ -233,10 +302,12 @@ curl -X POST http://localhost:4200/api/auth/generate-password-hash \
 
 使用 **better-sqlite3** 存储数据：
 
-- `tokens` - 登录 Token
+- `tokens` - 登录 Token（管理员和 Starlight 访问）
 - `access_keys` - Starlight 访问密钥
 - `resources` - 资源数据
-- `filters` - 过滤标签
+  - `content_type` - 资源类型（'link' 或 'document'）
+  - `content` - 文档内容（当 content_type 为 'document' 时）
+- `filters` - 过滤菜单
 
 数据库文件位于 `backend/data/kktools.db`
 
@@ -280,7 +351,7 @@ server {
 # backend/.env
 PORT=4200
 ADMIN_PASSWORD_HASH=your-secure-hash
-# FRONTEND_URL 在统一部署模式下不需要
+NODE_ENV=production
 ```
 
 > 💡 **统一部署优势**：
@@ -291,15 +362,60 @@ ADMIN_PASSWORD_HASH=your-secure-hash
 ## 🛠️ 技术栈
 
 ### 前端
-- Next.js 14 (App Router)
+- Next.js 14 (App Router, Static Export)
 - React 18 + TypeScript
 - Tailwind CSS
 - Lucide React Icons
 
 ### 后端
 - Node.js + Express
-- better-sqlite3
+- better-sqlite3 (SQLite 数据库)
 - bcrypt (密码加密)
+- dotenv (环境变量管理)
+
+## 📦 项目特点
+
+- ✅ **全栈应用** - Next.js 前端 + Express 后端
+- ✅ **统一部署** - 前后端同一端口，简化部署
+- ✅ **静态导出** - 前端可静态部署
+- ✅ **SQLite 数据库** - 轻量级，无需额外数据库服务
+- ✅ **Markdown 文档** - 支持富文本文档展示
+- ✅ **内容保护** - 文档查看时禁止复制
+- ✅ **权限控制** - 管理员和访问密钥双重权限
+- ✅ **响应式设计** - 适配各种设备
+
+## 🎯 使用示例
+
+### 创建链接类型资源
+
+1. 登录管理后台
+2. 点击"新增卡片"
+3. 选择分类和内容类型为"跳转链接"
+4. 填写标题、描述、链接 URL
+5. 上传图片
+6. 选择菜单标签
+7. 保存
+
+### 创建文档类型资源
+
+1. 登录管理后台
+2. 点击"新增卡片"
+3. 选择分类和内容类型为"文档内容"
+4. 填写标题、描述
+5. 使用 Markdown 编辑器编写文档内容
+   - 使用工具栏按钮快速插入格式
+   - 或使用快捷键（Ctrl+B、Ctrl+I 等）
+6. 上传封面图片
+7. 选择菜单标签
+8. 保存
+
+### 查看文档
+
+1. 在首页找到文档类型的卡片（右上角有"文档"标识）
+2. 点击卡片打开文档弹窗
+3. 查看完整文档内容
+4. 点击图片可以放大查看
+5. 注意：文档内容受保护，无法复制
 
 ## 📄 License
 

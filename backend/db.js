@@ -60,6 +60,18 @@ db.exec(`
   )
 `);
 
+// Add new columns if they don't exist (migration)
+try {
+  db.exec(`ALTER TABLE resources ADD COLUMN content_type TEXT DEFAULT 'link'`);
+} catch (e) {
+  // Column already exists, ignore
+}
+try {
+  db.exec(`ALTER TABLE resources ADD COLUMN content TEXT DEFAULT ''`);
+} catch (e) {
+  // Column already exists, ignore
+}
+
 // Filters table
 db.exec(`
   CREATE TABLE IF NOT EXISTS filters (
@@ -192,8 +204,8 @@ const accessKeys = {
 
 const resourceOps = {
   upsert: db.prepare(`
-    INSERT INTO resources (id, title, description, category, tags, image_url, link, featured, sort_order, created_at, updated_at)
-    VALUES (@id, @title, @description, @category, @tags, @imageUrl, @link, @featured, @sortOrder, @createdAt, @updatedAt)
+    INSERT INTO resources (id, title, description, category, tags, image_url, link, featured, content_type, content, sort_order, created_at, updated_at)
+    VALUES (@id, @title, @description, @category, @tags, @imageUrl, @link, @featured, @contentType, @content, @sortOrder, @createdAt, @updatedAt)
     ON CONFLICT(id) DO UPDATE SET
       title = @title,
       description = @description,
@@ -202,6 +214,8 @@ const resourceOps = {
       image_url = @imageUrl,
       link = @link,
       featured = @featured,
+      content_type = @contentType,
+      content = @content,
       sort_order = @sortOrder,
       updated_at = @updatedAt
   `),
@@ -225,6 +239,8 @@ const resources = {
         imageUrl: resource.imageUrl || resource.image_url || '',
         link: resource.link || '',
         featured: resource.featured ? 1 : 0,
+        contentType: resource.contentType || resource.content_type || 'link',
+        content: resource.content || '',
         sortOrder: resource.sortOrder || resource.sort_order || 0,
         createdAt: resource.createdAt || now,
         updatedAt: now,
@@ -274,6 +290,8 @@ const resources = {
       imageUrl: row.image_url,
       link: row.link,
       featured: row.featured === 1,
+      contentType: row.content_type || 'link',
+      content: row.content || '',
       sortOrder: row.sort_order,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

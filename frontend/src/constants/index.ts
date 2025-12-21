@@ -48,7 +48,7 @@ export const CATEGORY_INFO: Record<CategoryType, { title: string; subtitle: stri
   },
   'Starlight Academy': {
     title: 'Starlight Academy',
-    subtitle: 'Starlight探索与内部学习资源丨欢迎合作交流微信🛰️XingYueAIArt',
+    subtitle: '愿大家像星星一样散发着光芒，有无限可能',
   },
 };
 

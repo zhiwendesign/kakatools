@@ -22,7 +22,7 @@ const CATEGORY_TABS: CategoryType[] = ['AiCC', 'UXLib', 'Learning', 'Starlight A
 
 export default function ConfigPage() {
   const { isAuthenticated, token, login, logout, isLoading: authLoading } = useAuth();
-  const { resources, filters, isLoading, setFilters, updateResource: localUpdateResource, addResource: localAddResource, deleteResource: localDeleteResource } = useResources();
+  const { resources, filters, isLoading, setFilters, updateResource: localUpdateResource, addResource: localAddResource, deleteResource: localDeleteResource, reload: reloadResources } = useResources({ authToken: isAuthenticated ? token : null });
 
   const [activeTab, setActiveTab] = useState<CategoryType>('AiCC');
   const [editorView, setEditorView] = useState<EditorViewType>('resource');
@@ -57,7 +57,8 @@ export default function ConfigPage() {
     const result = await updateResource(token, updatedResource);
 
     if (result.success) {
-      localUpdateResource(editingId, updates);
+      // 重新从服务器加载数据，确保数据同步
+      await reloadResources();
     } else {
       throw new Error(result.message || '保存失败');
     }
@@ -70,7 +71,8 @@ export default function ConfigPage() {
     const result = await createResource(token, newResource);
 
     if (result.success) {
-      localAddResource(newResource);
+      // 重新从服务器加载数据，确保数据同步
+      await reloadResources();
       setShowAddForm(false);
       setActiveTab(newResource.category);
     } else {
@@ -86,7 +88,8 @@ export default function ConfigPage() {
     const result = await deleteResource(token, id);
 
     if (result.success) {
-      localDeleteResource(id);
+      // 重新从服务器加载数据，确保数据同步
+      await reloadResources();
       if (editingId === id) {
         setEditingId(null);
       }
@@ -101,11 +104,9 @@ export default function ConfigPage() {
 
     const result = await addFilter(token, category, label, tag);
 
-    if (result.success && result.filters) {
-      setFilters({
-        ...filters,
-        [category as CategoryType]: result.filters,
-      });
+    if (result.success) {
+      // 重新从服务器加载数据，确保数据同步
+      await reloadResources();
     } else {
       throw new Error(result.message || '添加失败');
     }
@@ -118,10 +119,8 @@ export default function ConfigPage() {
     const result = await deleteFilter(token, category, tag);
 
     if (result.success) {
-      setFilters({
-        ...filters,
-        [category as CategoryType]: filters[category as CategoryType].filter((f) => f.tag !== tag),
-      });
+      // 重新从服务器加载数据，确保数据同步
+      await reloadResources();
     } else {
       throw new Error(result.message || '删除失败');
     }
@@ -195,7 +194,7 @@ export default function ConfigPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-3xl font-bold text-primary mb-2">配置</h2>
-              <p className="text-secondary text-sm">管理资源详情、链接和过滤标签。</p>
+              <p className="text-secondary text-sm">管理资源详情、链接和菜单。</p>
             </div>
             <div className="flex items-center gap-3">
               {/* Tag Dictionary Button */}
@@ -248,7 +247,7 @@ export default function ConfigPage() {
                   setEditingId(null);
                 }}
               >
-                <Icon name="tag" size={16} /> 管理标签
+                <Icon name="tag" size={16} /> 管理菜单
               </Button>
 
               {/* Add New Resource Button */}

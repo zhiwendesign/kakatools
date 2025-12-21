@@ -23,9 +23,10 @@ interface UseResourcesReturn {
   error: string | null;
   // Actions
   updateResource: (id: string, updates: Partial<Resource>) => void;
-  addResource: (resource: Omit<Resource, 'id'>) => void;
+  addResource: (resource: Omit<Resource, 'id'> | Resource) => void;
   deleteResource: (id: string) => void;
   setFilters: (filters: FiltersMap) => void;
+  reload: () => Promise<void>;
   // Filtered data
   getFilteredResources: (
     category: CategoryType,
@@ -47,47 +48,48 @@ export function useResources(options?: UseResourcesOptions): UseResourcesReturn 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load data on mount and when auth token changes
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const categoriesToLoad: CategoryType[] = [...CATEGORIES];
-        const data = await fetchAllCategoriesData(categoriesToLoad, authToken);
+  // Load data function
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const categoriesToLoad: CategoryType[] = [...CATEGORIES];
+      const data = await fetchAllCategoriesData(categoriesToLoad, authToken);
 
-        const mergedResources: Resource[] = [];
-        const mergedFilters: FiltersMap = { ...DEFAULT_FILTERS };
+      const mergedResources: Resource[] = [];
+      const mergedFilters: FiltersMap = { ...DEFAULT_FILTERS };
 
-        Object.entries(data).forEach(([category, categoryData]) => {
-          const cat = category as CategoryType;
-          
-          // Add resources with category
-          categoryData.resources.forEach((resource) => {
-            mergedResources.push({
-              ...resource,
-              category: cat,
-            });
+      Object.entries(data).forEach(([category, categoryData]) => {
+        const cat = category as CategoryType;
+        
+        // Add resources with category
+        categoryData.resources.forEach((resource) => {
+          mergedResources.push({
+            ...resource,
+            category: cat,
           });
-
-          // Merge filters
-          if (categoryData.filters.length > 0) {
-            mergedFilters[cat] = categoryData.filters;
-          }
         });
 
-        setResources(mergedResources);
-        setFilters(mergedFilters);
-        setError(null);
-      } catch (err) {
-        console.error('Failed to load resources:', err);
-        setError('资源数据加载失败，已使用内置默认数据');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+        // Merge filters
+        if (categoryData.filters.length > 0) {
+          mergedFilters[cat] = categoryData.filters;
+        }
+      });
 
-    loadData();
+      setResources(mergedResources);
+      setFilters(mergedFilters);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to load resources:', err);
+      setError('资源数据加载失败，已使用内置默认数据');
+    } finally {
+      setIsLoading(false);
+    }
   }, [authToken]);
+
+  // Load data on mount and when auth token changes
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Resource actions
   const updateResource = useCallback((id: string, updates: Partial<Resource>) => {
@@ -183,6 +185,11 @@ export function useResources(options?: UseResourcesOptions): UseResourcesReturn 
     [resources, filters]
   );
 
+  // Reload data from server
+  const reload = useCallback(async () => {
+    await loadData();
+  }, [loadData]);
+
   return {
     resources,
     filters,
@@ -192,6 +199,7 @@ export function useResources(options?: UseResourcesOptions): UseResourcesReturn 
     addResource,
     deleteResource,
     setFilters,
+    reload,
     getFilteredResources,
     getAvailableTags,
   };

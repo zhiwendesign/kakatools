@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { Resource, Filter, CategoryType, FiltersMap } from '@/types';
 import { Button, Icon, Input } from '@/components/ui';
 import { DEFAULT_FILTERS } from '@/constants';
+import { MarkdownEditor } from './MarkdownEditor';
 
 interface ConfigEditorProps {
   resource: Resource;
@@ -14,11 +15,13 @@ interface ConfigEditorProps {
 export function ConfigEditor({ resource, filters, onSave }: ConfigEditorProps) {
   const [formData, setFormData] = useState({
     title: resource.title,
-    link: resource.link,
+    link: resource.link || '',
     imageUrl: resource.imageUrl,
     description: resource.description || '',
     tags: [...resource.tags],
     featured: resource.featured || false,
+    contentType: resource.contentType || 'link',
+    content: resource.content || '',
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
@@ -125,7 +128,7 @@ export function ConfigEditor({ resource, filters, onSave }: ConfigEditorProps) {
             onChange={(e) => handleChange('description', e.target.value)}
             placeholder="请输入描述..."
             rows={3}
-            className="w-full bg-surface-highlight border border-transparent focus:bg-white focus:border-accent rounded-xl px-4 py-3 text-sm focus:outline-none transition-all resize-none"
+            className="w-full bg-white border border-border rounded-xl px-4 py-3 text-sm text-primary placeholder:text-secondary/60 focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all resize-none shadow-sm"
           />
         </div>
 
@@ -152,18 +155,65 @@ export function ConfigEditor({ resource, filters, onSave }: ConfigEditorProps) {
           </div>
         </div>
 
-        {/* Link */}
+        {/* Content Type Selection */}
         <div className="space-y-3">
           <label className="text-sm font-medium text-primary flex items-center gap-2">
-            <Icon name="link" size={16} className="text-secondary" /> 跳转链接
+            <Icon name="fileText" size={16} className="text-secondary" /> 内容类型
           </label>
-          <Input
-            value={formData.link}
-            onChange={(e) => handleChange('link', e.target.value)}
-            placeholder="https://..."
-            className="font-mono text-xs"
-          />
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleChange('contentType', 'link')}
+              className={`
+                flex-1 px-4 py-3 rounded-lg text-sm font-medium border transition-all
+                ${formData.contentType === 'link'
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-white text-secondary border-border hover:border-accent'}
+              `}
+            >
+              <Icon name="link" size={16} className="inline mr-2" />
+              跳转链接
+            </button>
+            <button
+              onClick={() => handleChange('contentType', 'document')}
+              className={`
+                flex-1 px-4 py-3 rounded-lg text-sm font-medium border transition-all
+                ${formData.contentType === 'document'
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-white text-secondary border-border hover:border-accent'}
+              `}
+            >
+              <Icon name="fileText" size={16} className="inline mr-2" />
+              文档内容
+            </button>
+          </div>
         </div>
+
+        {/* Link or Document Content */}
+        {formData.contentType === 'link' ? (
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-primary flex items-center gap-2">
+              <Icon name="link" size={16} className="text-secondary" /> 跳转链接
+            </label>
+            <Input
+              value={formData.link}
+              onChange={(e) => handleChange('link', e.target.value)}
+              placeholder="https://..."
+              className="font-mono text-xs"
+            />
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-primary flex items-center gap-2">
+              <Icon name="fileText" size={16} className="text-secondary" /> 文档内容
+            </label>
+            <MarkdownEditor
+              value={formData.content}
+              onChange={(value) => handleChange('content', value)}
+              placeholder="请输入文档内容（支持 Markdown 格式）..."
+              rows={12}
+            />
+          </div>
+        )}
 
         {/* Image Upload */}
         <div className="space-y-3">
