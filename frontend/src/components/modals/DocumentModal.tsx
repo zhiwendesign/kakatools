@@ -8,56 +8,64 @@ interface DocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
   resource: Resource | null;
+  isAdmin?: boolean; // 是否为管理员
 }
 
-export function DocumentModal({ isOpen, onClose, resource }: DocumentModalProps) {
+export function DocumentModal({ isOpen, onClose, resource, isAdmin = false }: DocumentModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       
-      // 禁止复制文本
-      const preventCopy = (e: ClipboardEvent) => {
-        e.preventDefault();
-        return false;
-      };
-      
-      // 禁止选择文本
-      const preventSelect = (e: Event) => {
-        e.preventDefault();
-        return false;
-      };
-      
-      // 禁止右键菜单
-      const preventContextMenu = (e: MouseEvent) => {
-        e.preventDefault();
-        return false;
-      };
-      
-      // 禁止拖拽
-      const preventDrag = (e: DragEvent) => {
-        e.preventDefault();
-        return false;
-      };
-      
-      // 添加事件监听器
-      document.addEventListener('copy', preventCopy);
-      document.addEventListener('cut', preventCopy);
-      document.addEventListener('selectstart', preventSelect);
-      document.addEventListener('contextmenu', preventContextMenu);
-      document.addEventListener('dragstart', preventDrag);
+      // 只有非管理员才禁止复制
+      if (!isAdmin) {
+        // 禁止复制文本
+        const preventCopy = (e: ClipboardEvent) => {
+          e.preventDefault();
+          return false;
+        };
+        
+        // 禁止选择文本
+        const preventSelect = (e: Event) => {
+          e.preventDefault();
+          return false;
+        };
+        
+        // 禁止右键菜单
+        const preventContextMenu = (e: MouseEvent) => {
+          e.preventDefault();
+          return false;
+        };
+        
+        // 禁止拖拽
+        const preventDrag = (e: DragEvent) => {
+          e.preventDefault();
+          return false;
+        };
+        
+        // 添加事件监听器
+        document.addEventListener('copy', preventCopy);
+        document.addEventListener('cut', preventCopy);
+        document.addEventListener('selectstart', preventSelect);
+        document.addEventListener('contextmenu', preventContextMenu);
+        document.addEventListener('dragstart', preventDrag);
+        
+        return () => {
+          document.body.style.overflow = '';
+          document.removeEventListener('copy', preventCopy);
+          document.removeEventListener('cut', preventCopy);
+          document.removeEventListener('selectstart', preventSelect);
+          document.removeEventListener('contextmenu', preventContextMenu);
+          document.removeEventListener('dragstart', preventDrag);
+        };
+      }
       
       return () => {
         document.body.style.overflow = '';
-        document.removeEventListener('copy', preventCopy);
-        document.removeEventListener('cut', preventCopy);
-        document.removeEventListener('selectstart', preventSelect);
-        document.removeEventListener('contextmenu', preventContextMenu);
-        document.removeEventListener('dragstart', preventDrag);
       };
     } else {
       document.body.style.overflow = '';
     }
-  }, [isOpen]);
+  }, [isOpen, isAdmin]);
 
   if (!isOpen || !resource) return null;
 
@@ -92,20 +100,20 @@ export function DocumentModal({ isOpen, onClose, resource }: DocumentModalProps)
         <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-white to-surface-highlight/20">
           <div className="prose prose-sm max-w-none markdown-content-wrapper">
             <div
-              className="markdown-content select-none"
-              style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
-              onCopy={(e) => e.preventDefault()}
-              onCut={(e) => e.preventDefault()}
-              onContextMenu={(e) => e.preventDefault()}
+              className={`markdown-content ${!isAdmin ? 'select-none' : ''}`}
+              style={!isAdmin ? { userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' } : {}}
+              onCopy={!isAdmin ? (e) => e.preventDefault() : undefined}
+              onCut={!isAdmin ? (e) => e.preventDefault() : undefined}
+              onContextMenu={!isAdmin ? (e) => e.preventDefault() : undefined}
               dangerouslySetInnerHTML={{
-                __html: formatMarkdown(resource.content || ''),
+                __html: formatMarkdown(resource.content || '', isAdmin),
               }}
-              onMouseDown={(e) => {
+              onMouseDown={!isAdmin ? (e) => {
                 // 阻止文本选择
                 if (e.target !== e.currentTarget && (e.target as HTMLElement).tagName !== 'IMG') {
                   e.preventDefault();
                 }
-              }}
+              } : undefined}
               onClick={(e) => {
                 // 点击图片时放大查看
                 const target = e.target as HTMLElement;
@@ -165,7 +173,7 @@ export function DocumentModal({ isOpen, onClose, resource }: DocumentModalProps)
 }
 
 // 简单的 Markdown 转 HTML 函数
-function formatMarkdown(markdown: string): string {
+function formatMarkdown(markdown: string, allowSelect: boolean = false): string {
   let html = markdown;
 
   // 标题
@@ -194,8 +202,11 @@ function formatMarkdown(markdown: string): string {
   html = html.replace(/`([^`]+)`/g, '<code class="bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded text-sm font-mono border border-amber-200">$1</code>');
 
   // 图片 - 必须在链接之前处理，因为图片语法包含链接语法
+  const imageSelectStyle = allowSelect ? '' : 'user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;';
+  const imageSelectClass = allowSelect ? '' : 'select-none';
+  const imagePreventEvents = allowSelect ? '' : 'draggable="false" oncontextmenu="return false;" onmousedown="event.preventDefault();"';
   html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
-    return `<div class="my-6 flex justify-center select-none" style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;"><img src="${src}" alt="${alt || '图片'}" class="max-w-full h-auto rounded-lg shadow-lg border border-border hover:shadow-xl transition-shadow cursor-pointer select-none" style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; pointer-events: auto;" draggable="false" oncontextmenu="return false;" onmousedown="event.preventDefault();" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/800x600/e5e7eb/6b7280?text=图片加载失败'; this.className='max-w-full h-auto rounded-lg border border-red-200 bg-red-50 p-4';" /></div>`;
+    return `<div class="my-6 flex justify-center ${imageSelectClass}" style="${imageSelectStyle}"><img src="${src}" alt="${alt || '图片'}" class="max-w-full h-auto rounded-lg shadow-lg border border-border hover:shadow-xl transition-shadow cursor-pointer ${imageSelectClass}" style="${imageSelectStyle} pointer-events: auto;" ${imagePreventEvents} loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/800x600/e5e7eb/6b7280?text=图片加载失败'; this.className='max-w-full h-auto rounded-lg border border-red-200 bg-red-50 p-4';" /></div>`;
   });
 
   // 链接
@@ -227,45 +238,49 @@ function formatMarkdown(markdown: string): string {
   html = html.replace(/^---$/gim, '<hr class="my-6 border-t border-border" />');
   html = html.replace(/^\*\*\*$/gim, '<hr class="my-6 border-t border-border" />');
   
-  // 段落 - 添加禁止选择样式
+  // 段落 - 根据权限添加禁止选择样式
+  const selectStyle = allowSelect ? '' : 'user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;';
+  const selectClass = allowSelect ? '' : 'select-none';
   html = html.split('\n\n').map(para => {
     if (para.trim() && !para.match(/^<[h|u|o|l|p|d|b|h]/)) {
-      return `<p class="mb-4 leading-relaxed text-secondary select-none" style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;">${para.trim()}</p>`;
+      return `<p class="mb-4 leading-relaxed text-secondary ${selectClass}" style="${selectStyle}">${para.trim()}</p>`;
     }
     return para;
   }).join('\n');
   
-  // 为所有文本元素添加禁止选择样式（使用 style 属性，避免重复 class）
-  html = html.replace(/<h([1-6])([^>]*)>/g, (match, level, attrs) => {
-    if (!attrs.includes('style=')) {
-      return `<h${level}${attrs} style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;">`;
-    }
-    return match;
-  });
-  html = html.replace(/<strong([^>]*)>/g, (match, attrs) => {
-    if (!attrs.includes('style=')) {
-      return `<strong${attrs} style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;">`;
-    }
-    return match;
-  });
-  html = html.replace(/<em([^>]*)>/g, (match, attrs) => {
-    if (!attrs.includes('style=')) {
-      return `<em${attrs} style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;">`;
-    }
-    return match;
-  });
-  html = html.replace(/<li([^>]*)>/g, (match, attrs) => {
-    if (!attrs.includes('style=')) {
-      return `<li${attrs} style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;">`;
-    }
-    return match;
-  });
-  html = html.replace(/<blockquote([^>]*)>/g, (match, attrs) => {
-    if (!attrs.includes('style=')) {
-      return `<blockquote${attrs} style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;">`;
-    }
-    return match;
-  });
+  // 为所有文本元素添加禁止选择样式（仅当不允许选择时）
+  if (!allowSelect) {
+    html = html.replace(/<h([1-6])([^>]*)>/g, (match, level, attrs) => {
+      if (!attrs.includes('style=')) {
+        return `<h${level}${attrs} style="${selectStyle}">`;
+      }
+      return match;
+    });
+    html = html.replace(/<strong([^>]*)>/g, (match, attrs) => {
+      if (!attrs.includes('style=')) {
+        return `<strong${attrs} style="${selectStyle}">`;
+      }
+      return match;
+    });
+    html = html.replace(/<em([^>]*)>/g, (match, attrs) => {
+      if (!attrs.includes('style=')) {
+        return `<em${attrs} style="${selectStyle}">`;
+      }
+      return match;
+    });
+    html = html.replace(/<li([^>]*)>/g, (match, attrs) => {
+      if (!attrs.includes('style=')) {
+        return `<li${attrs} style="${selectStyle}">`;
+      }
+      return match;
+    });
+    html = html.replace(/<blockquote([^>]*)>/g, (match, attrs) => {
+      if (!attrs.includes('style=')) {
+        return `<blockquote${attrs} style="${selectStyle}">`;
+      }
+      return match;
+    });
+  }
 
   // 换行
   html = html.replace(/\n/g, '<br />');

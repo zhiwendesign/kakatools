@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Resource } from '@/types';
 import { Icon } from '@/components/ui';
 import { DocumentModal } from '@/components/modals/DocumentModal';
+import { useAuth } from '@/hooks';
 
 interface ResourceCardProps {
   item: Resource;
@@ -12,6 +13,7 @@ interface ResourceCardProps {
 
 export function ResourceCard({ item, onEdit }: ResourceCardProps) {
   const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const { isAuthenticated } = useAuth();
   const isDocument = item.contentType === 'document' && item.content;
 
   const handleClick = (e: React.MouseEvent) => {
@@ -106,6 +108,7 @@ export function ResourceCard({ item, onEdit }: ResourceCardProps) {
         isOpen={showDocumentModal}
         onClose={() => setShowDocumentModal(false)}
         resource={item}
+        isAdmin={isAuthenticated}
       />
     )}
     </>
