@@ -51,11 +51,19 @@ db.exec(`
     code TEXT UNIQUE NOT NULL,
     username TEXT DEFAULT 'Anonymous',
     name TEXT,
+    user_type TEXT DEFAULT 'user',
     duration INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
     expires_at INTEGER NOT NULL
   )
 `);
+
+// 添加新列（如果不存在）
+try {
+  db.exec(`ALTER TABLE access_keys ADD COLUMN user_type TEXT DEFAULT 'user'`);
+} catch (e) {
+  // Column already exists, ignore
+}
 
 // Resources table
 db.exec(`
@@ -186,8 +194,8 @@ const tokens = {
 
 const keyOps = {
   add: db.prepare(`
-    INSERT INTO access_keys (code, username, duration, created_at, expires_at)
-    VALUES (@code, @username, @duration, @createdAt, @expiresAt)
+    INSERT INTO access_keys (code, username, user_type, duration, created_at, expires_at)
+    VALUES (@code, @username, @userType, @duration, @createdAt, @expiresAt)
   `),
   findByCode: db.prepare(`SELECT * FROM access_keys WHERE code = ?`),
   getAll: db.prepare(`SELECT * FROM access_keys WHERE expires_at > ?`),
@@ -197,12 +205,12 @@ const keyOps = {
 };
 
 const accessKeys = {
-  add(code, username, durationInDays) {
+  add(code, username, durationInDays, userType = 'user') {
     const now = Date.now();
     const expiresAt = now + durationInDays * 24 * 60 * 60 * 1000;
     try {
-      keyOps.add.run({ code, username, duration: durationInDays, createdAt: now, expiresAt });
-      return { code, username, duration: durationInDays, createdAt: now, expiresAt };
+      keyOps.add.run({ code, username, userType, duration: durationInDays, createdAt: now, expiresAt });
+      return { code, username, userType, duration: durationInDays, createdAt: now, expiresAt };
     } catch (error) {
       console.error('Error adding access key:', error);
       return null;
@@ -217,6 +225,7 @@ const accessKeys = {
       code: row.code,
       username: row.username,
       name: row.name,
+      userType: row.user_type || 'user',
       duration: row.duration,
       createdAt: row.created_at,
       expiresAt: row.expires_at,

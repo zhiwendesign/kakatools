@@ -221,6 +221,21 @@ app.post('/api/auth/logout', (req, res, next) => {
   }
 });
 
+// Auth middleware for admin routes
+const requireAuth = (req, res, next) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token || !tokens.verify(token)) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: Admin access required' });
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Generate new password hash (Admin Only)
 app.post('/api/auth/generate-password-hash', requireAuth, async (req, res, next) => {
   try {
@@ -250,21 +265,6 @@ app.post('/api/auth/generate-password-hash', requireAuth, async (req, res, next)
 
 // ==================== Access Keys Routes ====================
 
-// Auth middleware for admin routes
-const requireAuth = (req, res, next) => {
-  try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token || !tokens.verify(token)) {
-      return res.status(401).json({ success: false, message: 'Unauthorized: Admin access required' });
-    }
-    next();
-  } catch (error) {
-    next(error);
-  }
-};
-
 // Generate Access Key (Admin Only)
 app.post('/api/keys/generate', requireAuth, (req, res, next) => {
   try {
@@ -275,7 +275,7 @@ app.post('/api/keys/generate', requireAuth, (req, res, next) => {
     }
 
     const code = crypto.randomBytes(16).toString('hex').toUpperCase();
-    const newKey = accessKeys.add(code, username || 'Anonymous', durationInDays || 30);
+    const newKey = accessKeys.add(code, username || 'Anonymous', durationInDays || 30, 'user');
 
     if (newKey) {
       res.json({ success: true, key: newKey });
@@ -312,7 +312,7 @@ app.post('/api/keys/verify', (req, res, next) => {
     // 获取客户端 IP
     const clientIp = getClientIp(req);
     
-    // 检查访问密钥是否已被其他 IP 使用
+    // 检查访问密钥是否已被其他 IP 使用（单 IP 限制）
     if (tokens.isAccessKeyInUse(key.code, clientIp)) {
       return res.status(403).json({ 
         success: false, 
@@ -325,7 +325,7 @@ app.post('/api/keys/verify', (req, res, next) => {
     const currentIpTokens = existingTokens.filter(t => t.ip_address === clientIp);
     currentIpTokens.forEach(t => tokens.delete(t.token));
 
-    // 生成新的访问 token
+    // 创建 starlight 类型的 token
     const accessToken = generateToken();
     const keyExpiresAt = key.expires_at;
     tokens.add(accessToken, 'starlight', keyExpiresAt, clientIp, key.code);

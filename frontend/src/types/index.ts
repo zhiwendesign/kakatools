@@ -48,6 +48,7 @@ export interface VerifyResponse {
 export interface AccessKey {
   code: string;
   username: string;
+  userType?: 'user' | 'admin';
   createdAt: number;
   expiresAt: number;
   duration: number;
@@ -57,6 +58,7 @@ export interface AccessKey {
 export interface AccessKeyInfo {
   code: string;
   username: string;
+  userType?: 'user' | 'admin';
   createdAt: number;
   expiresAt: number;
   duration: number;
