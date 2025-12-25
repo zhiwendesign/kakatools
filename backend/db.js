@@ -106,6 +106,16 @@ db.exec(`
   )
 `);
 
+// Admin settings table (for storing password hash)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS admin_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    key TEXT UNIQUE NOT NULL,
+    value TEXT NOT NULL,
+    updated_at INTEGER NOT NULL
+  )
+`);
+
 // Create indexes
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_tokens_token ON tokens(token);
@@ -296,6 +306,10 @@ const resources = {
       return true;
     } catch (error) {
       console.error('Error upserting resource:', error);
+      // 如果是唯一约束冲突，提供更详细的错误信息
+      if (error.code === 'SQLITE_CONSTRAINT_UNIQUE' || (error.message && error.message.includes('UNIQUE constraint'))) {
+        console.error(`资源ID冲突: ${resource.id}`);
+      }
       return false;
     }
   },
@@ -407,6 +421,39 @@ const filters = {
   },
 };
 
+// ==================== Admin Settings Operations ====================
+
+const adminSettingsOps = {
+  get: db.prepare(`SELECT value FROM admin_settings WHERE key = ?`),
+  set: db.prepare(`
+    INSERT INTO admin_settings (key, value, updated_at)
+    VALUES (@key, @value, @updatedAt)
+    ON CONFLICT(key) DO UPDATE SET
+      value = @value,
+      updated_at = @updatedAt
+  `),
+};
+
+const adminSettings = {
+  get(key) {
+    const row = adminSettingsOps.get.get(key);
+    return row ? row.value : null;
+  },
+  set(key, value) {
+    try {
+      adminSettingsOps.set.run({
+        key,
+        value,
+        updatedAt: Date.now(),
+      });
+      return true;
+    } catch (error) {
+      console.error('Error setting admin setting:', error);
+      return false;
+    }
+  },
+};
+
 // Periodic cleanup (every hour)
 setInterval(() => {
   tokens.cleanup();
@@ -420,4 +467,5 @@ module.exports = {
   accessKeys,
   resources,
   filters,
+  adminSettings,
 };

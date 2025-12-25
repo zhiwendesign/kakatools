@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CategoryType, Filter, FiltersMap } from '@/types';
+import { CategoryType, Filter, FiltersMap, Resource } from '@/types';
 import { Button, Icon, Input } from '@/components/ui';
 import { DEFAULT_FILTERS } from '@/constants';
+import * as XLSX from 'xlsx';
 
 interface ManageFiltersFormProps {
   filters: FiltersMap;
+  resources?: Resource[];
   onAddFilter: (category: string, label: string, tag: string) => Promise<void>;
   onDeleteFilter: (category: string, tag: string) => Promise<void>;
   onCancel: () => void;
@@ -14,12 +16,13 @@ interface ManageFiltersFormProps {
 
 const CATEGORY_OPTIONS: CategoryType[] = ['AiCC', 'UXLib', 'Learning', 'Starlight Academy'];
 
-export function ManageFiltersForm({ filters, onAddFilter, onDeleteFilter, onCancel }: ManageFiltersFormProps) {
+export function ManageFiltersForm({ filters, resources = [], onAddFilter, onDeleteFilter, onCancel }: ManageFiltersFormProps) {
   const [activeCategory, setActiveCategory] = useState<CategoryType>('AiCC');
   const [newTagLabel, setNewTagLabel] = useState('');
   const [newTagValue, setNewTagValue] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [deletingTag, setDeletingTag] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const currentFilters = (filters[activeCategory] || DEFAULT_FILTERS[activeCategory] || []).filter(
     (f: Filter) => f.tag !== 'All'
@@ -64,6 +67,53 @@ export function ManageFiltersForm({ filters, onAddFilter, onDeleteFilter, onCanc
     }
   };
 
+  const handleExportToExcel = () => {
+    setIsExporting(true);
+    try {
+      // 获取当前分类下的所有资源
+      const categoryResources = resources.filter((r) => r.category === activeCategory);
+
+      if (categoryResources.length === 0) {
+        alert('当前分类下没有资源，无法导出');
+        setIsExporting(false);
+        return;
+      }
+
+      // 准备Excel数据
+      const excelData = categoryResources.map((resource) => {
+        return {
+          标题: resource.title || '',
+          分类: resource.category || '',
+          描述: resource.description || '',
+          标签: resource.tags ? resource.tags.join(',') : '',
+          图片链接: resource.imageUrl || '',
+          跳转链接: resource.link || '',
+          卡卡推荐: resource.featured ? '是' : '否',
+          内容类型: resource.contentType === 'document' ? 'document' : 'link',
+          文档内容: resource.content || '',
+        };
+      });
+
+      // 创建工作表
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, '资源列表');
+
+      // 生成文件名
+      const fileName = `${activeCategory}_资源列表_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+      // 下载文件
+      XLSX.writeFile(workbook, fileName);
+
+      alert(`成功导出 ${categoryResources.length} 条资源到 ${fileName}`);
+    } catch (error) {
+      console.error('导出失败:', error);
+      alert('导出失败，请稍后重试');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="p-8 animate-fade-in">
       <div className="flex items-center justify-between mb-8 pb-6 border-b border-border">
@@ -73,9 +123,26 @@ export function ManageFiltersForm({ filters, onAddFilter, onDeleteFilter, onCanc
           </span>
           <h2 className="text-xl font-bold text-primary mt-2">管理菜单</h2>
         </div>
-        <Button variant="ghost" onClick={onCancel}>
-          关闭
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={handleExportToExcel}
+            disabled={isExporting || resources.filter((r) => r.category === activeCategory).length === 0}
+          >
+            {isExporting ? (
+              <>
+                <Icon name="loader" size={16} className="animate-spin" /> 导出中...
+              </>
+            ) : (
+              <>
+                <Icon name="download" size={16} /> 导出Excel
+              </>
+            )}
+          </Button>
+          <Button variant="ghost" onClick={onCancel}>
+            关闭
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-8 max-w-2xl">

@@ -8,9 +8,10 @@ const fs = require('fs');
 const bcrypt = require('bcrypt');
 const compression = require('compression');
 const helmet = require('helmet');
+const multer = require('multer');
 
 // Import database operations
-const { tokens, tokenOps, accessKeys, resources, filters } = require('./db');
+const { tokens, tokenOps, accessKeys, resources, filters, adminSettings } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 4200;
@@ -76,12 +77,78 @@ const errorHandler = (err, req, res, next) => {
 // Serve static data files
 app.use('/data', express.static(path.join(__dirname, 'data')));
 
+// ==================== Image Upload Configuration ====================
+
+// 图片上传目录
+const UPLOAD_DIR = path.join(__dirname, 'data', 'uploads');
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
+// 配置 multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOAD_DIR);
+  },
+  filename: (req, file, cb) => {
+    // 生成唯一文件名：时间戳 + 随机字符串 + 原始扩展名
+    const ext = path.extname(file.originalname);
+    const name = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}${ext}`;
+    cb(null, name);
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+  fileFilter: (req, file, cb) => {
+    // 只允许图片文件
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('只允许上传图片文件'));
+    }
+  },
+});
+
+// 获取服务器基础URL（用于生成完整的图片URL）
+const getBaseUrl = (req) => {
+  const protocol = req.protocol || 'http';
+  const host = req.get('host') || `${req.hostname}:${PORT}`;
+  return `${protocol}://${host}`;
+};
+
 // 密码配置 - 使用环境变量或默认哈希值
 // 默认密码哈希对应明文密码: 'admin123' (请在生产环境中修改)
 const DEFAULT_ADMIN_PASSWORD_HASH = '$2b$10$fqSNTFsk5LB9SxUC0qr5.uW9mv/Ty89y.RvUJ4lcHcbyCvV2Zp01W';
 
-// 获取管理员密码哈希 - 优先使用环境变量
-let ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || DEFAULT_ADMIN_PASSWORD_HASH;
+// 获取管理员密码哈希 - 优先使用数据库，然后是环境变量，最后是默认值
+const getAdminPasswordHash = () => {
+  // 先从数据库读取
+  const dbHash = adminSettings.get('admin_password_hash');
+  if (dbHash && validatePasswordHashFormat(dbHash)) {
+    return dbHash;
+  }
+  
+  // 如果数据库没有，使用环境变量
+  const envHash = process.env.ADMIN_PASSWORD_HASH;
+  if (envHash && validatePasswordHashFormat(envHash)) {
+    // 将环境变量的哈希保存到数据库
+    adminSettings.set('admin_password_hash', envHash);
+    return envHash;
+  }
+  
+  // 最后使用默认值
+  if (validatePasswordHashFormat(DEFAULT_ADMIN_PASSWORD_HASH)) {
+    // 将默认哈希保存到数据库
+    adminSettings.set('admin_password_hash', DEFAULT_ADMIN_PASSWORD_HASH);
+    return DEFAULT_ADMIN_PASSWORD_HASH;
+  }
+  
+  return DEFAULT_ADMIN_PASSWORD_HASH;
+};
 
 // 验证密码哈希格式是否有效（不验证具体密码，只检查格式）
 const validatePasswordHashFormat = (hash) => {
@@ -89,13 +156,13 @@ const validatePasswordHashFormat = (hash) => {
   return hash && typeof hash === 'string' && hash.startsWith('$2') && hash.length >= 59;
 };
 
-// 在启动时验证密码哈希格式
+// 在启动时初始化密码哈希
 const initializePasswordHash = async () => {
-  if (!validatePasswordHashFormat(ADMIN_PASSWORD_HASH)) {
-    console.warn('当前密码哈希格式无效，使用默认哈希');
-    ADMIN_PASSWORD_HASH = DEFAULT_ADMIN_PASSWORD_HASH;
+  const hash = getAdminPasswordHash();
+  if (validatePasswordHashFormat(hash)) {
+    console.log('✅ 管理员密码哈希已初始化');
   } else {
-    console.log('✅ 使用环境变量中的密码哈希');
+    console.warn('⚠️ 密码哈希格式无效，使用默认哈希');
   }
 };
 
@@ -153,7 +220,8 @@ app.post('/api/auth/login', async (req, res, next) => {
       return res.status(400).json({ success: false, message: '密码不能为空' });
     }
 
-    const isValidPassword = await bcrypt.compare(password, ADMIN_PASSWORD_HASH);
+    const currentHash = getAdminPasswordHash();
+    const isValidPassword = await bcrypt.compare(password, currentHash);
 
     if (isValidPassword) {
       const token = generateToken();
@@ -228,7 +296,7 @@ const requireAuth = (req, res, next) => {
   }
 };
 
-// Generate new password hash (Admin Only)
+// Generate new password hash (Admin Only) - 仅生成，不更新
 app.post('/api/auth/generate-password-hash', requireAuth, async (req, res, next) => {
   try {
     const { newPassword } = req.body;
@@ -250,6 +318,58 @@ app.post('/api/auth/generate-password-hash', requireAuth, async (req, res, next)
       hash: newHash,
       note: '请将生成的哈希值设置为环境变量 ADMIN_PASSWORD_HASH'
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update admin password (Admin Only)
+app.post('/api/auth/update-password', requireAuth, async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || typeof currentPassword !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: '当前密码不能为空'
+      });
+    }
+
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: '新密码长度至少6位'
+      });
+    }
+
+    // 验证当前密码
+    const currentHash = getAdminPasswordHash();
+    const isValidPassword = await bcrypt.compare(currentPassword, currentHash);
+
+    if (!isValidPassword) {
+      return res.status(401).json({
+        success: false,
+        message: '当前密码错误'
+      });
+    }
+
+    // 生成新密码哈希
+    const newHash = await bcrypt.hash(newPassword, 10);
+    
+    // 保存到数据库
+    const success = adminSettings.set('admin_password_hash', newHash);
+    
+    if (success) {
+      console.log('✅ 管理员密码已更新');
+      res.json({
+        success: true,
+        message: '密码更新成功'
+      });
+    } else {
+      const error = new Error('密码更新失败');
+      error.statusCode = 500;
+      return next(error);
+    }
   } catch (error) {
     next(error);
   }
@@ -475,6 +595,100 @@ app.post('/api/resources', requireAuth, (req, res, next) => {
   }
 });
 
+// Batch add resources (Admin Only)
+app.post('/api/resources/batch', requireAuth, (req, res, next) => {
+  try {
+    const resourcesList = req.body.resources || req.body;
+    
+    if (!Array.isArray(resourcesList) || resourcesList.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Resources array is required and cannot be empty' 
+      });
+    }
+
+    const results = {
+      success: 0,
+      failed: 0,
+      errors: [],
+    };
+
+    // 批量保存资源
+    resourcesList.forEach((resource, index) => {
+      try {
+        if (!resource.id || !resource.title || !resource.category) {
+          results.failed++;
+          results.errors.push({
+            index: index + 1,
+            message: '缺少必需字段: id, title, category'
+          });
+          return;
+        }
+
+        // 验证分类是否有效
+        const validCategories = ['AiCC', 'UXLib', 'Learning', 'Starlight Academy'];
+        if (!validCategories.includes(resource.category)) {
+          results.failed++;
+          results.errors.push({
+            index: index + 1,
+            message: `无效的分类: ${resource.category}`
+          });
+          return;
+        }
+
+        // 确保tags是数组
+        if (resource.tags && !Array.isArray(resource.tags)) {
+          resource.tags = [];
+        }
+
+        const success = resources.upsert(resource);
+        if (success) {
+          results.success++;
+        } else {
+          results.failed++;
+          results.errors.push({
+            index: index + 1,
+            message: `保存失败: ${resource.title || resource.id}`
+          });
+        }
+      } catch (error) {
+        results.failed++;
+        results.errors.push({
+          index: index + 1,
+          message: `处理失败: ${error.message || '未知错误'}`
+        });
+        console.error(`批量保存第 ${index + 1} 条资源时出错:`, error);
+      }
+    });
+
+    if (results.success > 0) {
+      res.json({
+        success: true,
+        message: `成功保存 ${results.success} 条资源${results.failed > 0 ? `，失败 ${results.failed} 条` : ''}`,
+        results: {
+          total: resourcesList.length,
+          success: results.success,
+          failed: results.failed,
+          errors: results.errors,
+        }
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: '所有资源保存失败',
+        results: {
+          total: resourcesList.length,
+          success: 0,
+          failed: results.failed,
+          errors: results.errors,
+        }
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Delete resource (Admin Only)
 app.delete('/api/resources/:id', requireAuth, (req, res, next) => {
   try {
@@ -542,6 +756,36 @@ app.delete('/api/filters/:category/:tag', requireAuth, (req, res, next) => {
     next(error);
   }
 });
+
+// ==================== Image Upload Routes ====================
+
+// Upload image (Admin Only)
+app.post('/api/upload/image', requireAuth, upload.single('image'), (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: '没有上传文件'
+      });
+    }
+
+    const baseUrl = getBaseUrl(req);
+    const imageUrl = `${baseUrl}/data/uploads/${req.file.filename}`;
+
+    res.json({
+      success: true,
+      url: imageUrl,
+      filename: req.file.filename,
+      size: req.file.size,
+      mimetype: req.file.mimetype,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Serve uploaded images
+app.use('/data/uploads', express.static(UPLOAD_DIR));
 
 // ==================== Health Check ====================
 app.get('/api/health', (req, res) => {

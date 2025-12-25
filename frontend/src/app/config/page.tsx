@@ -13,9 +13,10 @@ import {
   ManageFiltersForm,
   KeyManagement,
   HeaderConfig,
+  PasswordManagement,
   TagDictionary,
 } from '@/components/config';
-import { createResource, updateResource, deleteResource, addFilter, deleteFilter, login as apiLogin } from '@/lib/api';
+import { createResource, batchCreateResources, updateResource, deleteResource, addFilter, deleteFilter, login as apiLogin } from '@/lib/api';
 import { STORAGE_KEYS } from '@/constants';
 
 const CATEGORY_TABS: CategoryType[] = ['AiCC', 'UXLib', 'Learning', 'Starlight Academy'];
@@ -77,6 +78,45 @@ export default function ConfigPage() {
       setActiveTab(newResource.category);
     } else {
       throw new Error(result.message || '创建失败');
+    }
+  };
+
+  // Handle batch add resources
+  const handleBatchAddResources = async (resources: any[]) => {
+    if (!token) return;
+
+    try {
+      const result = await batchCreateResources(token, resources);
+
+      if (result.success) {
+        // 重新从服务器加载数据，确保数据同步
+        await reloadResources();
+        
+        // 显示成功消息
+        const message = result.message || `成功保存 ${result.results?.success || resources.length} 条资源`;
+        alert(message);
+        
+        // 如果有失败的项目，显示详细信息
+        if (result.results && result.results.failed > 0) {
+          const errorDetails = result.results.errors
+            .map(e => `第 ${e.index} 行: ${e.message}`)
+            .join('\n');
+          alert(`部分资源保存失败：\n${errorDetails}`);
+          console.warn('批量新增部分失败:', errorDetails);
+        }
+      } else {
+        // 显示详细的错误信息
+        const errorMsg = result.message || '批量创建失败';
+        const errorDetails = result.results?.errors
+          ? result.results.errors.map(e => `第 ${e.index} 行: ${e.message}`).join('\n')
+          : '';
+        alert(`批量保存失败：${errorMsg}${errorDetails ? '\n\n详细错误：\n' + errorDetails : ''}`);
+        throw new Error(errorMsg);
+      }
+    } catch (error: any) {
+      console.error('批量保存错误:', error);
+      alert(`批量保存失败：${error.message || '未知错误，请查看控制台获取详细信息'}`);
+      throw error;
     }
   };
 
@@ -231,9 +271,24 @@ export default function ConfigPage() {
                   setEditingId(null);
                   setShowAddForm(false);
                   setShowManageFilters(false);
+                  setShowTagDictionary(false);
                 }}
               >
                 <Icon name="key" size={16} /> Access Keys
+              </Button>
+
+              {/* Password Management Button */}
+              <Button
+                variant={editorView === 'password' ? 'secondary' : 'outline'}
+                onClick={() => {
+                  setEditorView('password');
+                  setEditingId(null);
+                  setShowAddForm(false);
+                  setShowManageFilters(false);
+                  setShowTagDictionary(false);
+                }}
+              >
+                <Icon name="lock" size={16} /> 密码管理
               </Button>
 
               {/* Manage Filters Button */}
@@ -257,6 +312,7 @@ export default function ConfigPage() {
                   setEditorView('resource');
                   setEditingId(null);
                   setShowManageFilters(false);
+                  setShowTagDictionary(false);
                 }}
               >
                 <Icon name="plus" size={16} /> 新增卡片
@@ -359,15 +415,31 @@ export default function ConfigPage() {
                     onTokenRequired={() => setShowTokenModal(true)}
                   />
                 </div>
+              ) : editorView === 'password' ? (
+                <div className="p-8 animate-fade-in">
+                  <div className="mb-8 pb-4 border-b border-border">
+                    <h3 className="text-xl font-bold text-primary flex items-center gap-2">
+                      <Icon name="lock" size={24} className="text-blue-500" />
+                      密码管理
+                    </h3>
+                    <p className="text-sm text-secondary mt-1">更改管理员登录密码</p>
+                  </div>
+                  <PasswordManagement
+                    isAuthenticated={isAuthenticated}
+                    onTokenRequired={() => setShowTokenModal(true)}
+                  />
+                </div>
               ) : showAddForm ? (
                 <AddResourceForm
                   filters={filters}
                   onSave={handleAddResource}
+                  onBatchSave={handleBatchAddResources}
                   onCancel={() => setShowAddForm(false)}
                 />
               ) : showManageFilters ? (
                 <ManageFiltersForm
                   filters={filters}
+                  resources={resources}
                   onAddFilter={handleAddFilter}
                   onDeleteFilter={handleDeleteFilter}
                   onCancel={() => setShowManageFilters(false)}

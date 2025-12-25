@@ -5,6 +5,7 @@ import { CategoryType, Filter, FiltersMap } from '@/types';
 import { Button, Icon, Input } from '@/components/ui';
 import { DEFAULT_FILTERS, CATEGORY_INFO } from '@/constants';
 import { MarkdownEditor } from './MarkdownEditor';
+import { BatchAddForm } from './BatchAddForm';
 
 interface AddResourceFormProps {
   filters: FiltersMap;
@@ -20,12 +21,25 @@ interface AddResourceFormProps {
     contentType?: 'link' | 'document';
     content?: string;
   }) => Promise<void>;
+  onBatchSave?: (resources: Array<{
+    id: string;
+    title: string;
+    description: string;
+    category: CategoryType;
+    tags: string[];
+    imageUrl: string;
+    link: string;
+    featured: boolean;
+    contentType?: 'link' | 'document';
+    content?: string;
+  }>) => Promise<void>;
   onCancel: () => void;
 }
 
 const CATEGORY_OPTIONS: CategoryType[] = ['AiCC', 'UXLib', 'Learning', 'Starlight Academy'];
 
-export function AddResourceForm({ filters, onSave, onCancel }: AddResourceFormProps) {
+export function AddResourceForm({ filters, onSave, onBatchSave, onCancel }: AddResourceFormProps) {
+  const [mode, setMode] = useState<'single' | 'batch'>('single');
   const [formData, setFormData] = useState({
     title: '',
     link: '',
@@ -116,6 +130,36 @@ export function AddResourceForm({ filters, onSave, onCancel }: AddResourceFormPr
     }
   };
 
+  // 如果切换到批量模式且有批量保存函数，显示批量新增表单
+  if (mode === 'batch' && onBatchSave) {
+    return (
+      <div className="p-8 animate-fade-in">
+        <div className="flex items-center justify-between mb-8 pb-6 border-b border-border">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-1 rounded">
+              批量新增
+            </span>
+            <h2 className="text-xl font-bold text-primary mt-2">批量导入资源</h2>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="ghost" onClick={() => setMode('single')}>
+              <Icon name="arrowLeft" size={16} /> 返回单个新增
+            </Button>
+            <Button variant="ghost" onClick={onCancel}>
+              取消
+            </Button>
+          </div>
+        </div>
+        <BatchAddForm
+          filters={filters}
+          onSave={onBatchSave}
+          onCancel={() => setMode('single')}
+          showHeader={false}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 animate-fade-in">
       <div className="flex items-center justify-between mb-8 pb-6 border-b border-border">
@@ -126,6 +170,14 @@ export function AddResourceForm({ filters, onSave, onCancel }: AddResourceFormPr
           <h2 className="text-xl font-bold text-primary mt-2">添加新卡片</h2>
         </div>
         <div className="flex gap-3">
+          {onBatchSave && (
+            <Button 
+              variant="outline" 
+              onClick={() => setMode('batch')}
+            >
+              <Icon name="upload" size={16} /> 批量新增
+            </Button>
+          )}
           <Button variant="ghost" onClick={onCancel}>
             取消
           </Button>

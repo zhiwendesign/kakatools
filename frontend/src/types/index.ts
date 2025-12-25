@@ -96,5 +96,5 @@ export type FiltersMap = Record<CategoryType, Filter[]>;
 export type ViewType = 'home' | 'config';
 
 // Config Editor View
-export type EditorViewType = 'resource' | 'header' | 'keys';
+export type EditorViewType = 'resource' | 'header' | 'keys' | 'password';
 

@@ -202,6 +202,23 @@ export async function generatePasswordHash(
   return response.json();
 }
 
+export async function updatePassword(
+  token: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<{ success: boolean; message?: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/update-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  
+  return response.json();
+}
+
 // ==================== Resources API ====================
 
 export async function createResource(
@@ -261,6 +278,42 @@ export async function deleteResource(
   const response = await fetch(`${API_BASE_URL}/api/resources/${encodeURIComponent(id)}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
+  });
+  
+  return response.json();
+}
+
+export async function batchCreateResources(
+  token: string,
+  resources: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    category: string;
+    tags: string[];
+    imageUrl?: string;
+    link?: string;
+    featured?: boolean;
+    contentType?: 'link' | 'document';
+    content?: string;
+  }>
+): Promise<{ 
+  success: boolean; 
+  message?: string;
+  results?: {
+    total: number;
+    success: number;
+    failed: number;
+    errors: Array<{ index: number; message: string }>;
+  };
+}> {
+  const response = await fetch(`${API_BASE_URL}/api/resources/batch`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ resources }),
   });
   
   return response.json();

@@ -23,6 +23,7 @@ import {
   Trash,
   ArrowUp,
   ArrowDown,
+  ArrowLeft,
   Star,
   Key,
   Layout,
@@ -33,6 +34,11 @@ import {
   LogOut,
   Loader,
   FileText,
+  Eye,
+  EyeOff,
+  Download,
+  Check,
+  Copy,
   LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -83,6 +89,8 @@ const iconMap: Record<string, LucideIcon> = {
   arrowUp: ArrowUp,
   ArrowDown,
   arrowDown: ArrowDown,
+  ArrowLeft,
+  arrowLeft: ArrowLeft,
   Star,
   star: Star,
   Key,
@@ -103,6 +111,16 @@ const iconMap: Record<string, LucideIcon> = {
   loader: Loader,
   FileText,
   fileText: FileText,
+  Eye,
+  eye: Eye,
+  EyeOff,
+  eyeOff: EyeOff,
+  Download,
+  download: Download,
+  Check,
+  check: Check,
+  Copy,
+  copy: Copy,
 };
 
 export type IconName = keyof typeof iconMap;
