@@ -1,0 +1,136 @@
+import { clsx, type ClassValue } from 'clsx';
+
+// Utility for combining class names
+export function cn(...inputs: ClassValue[]) {
+  return clsx(inputs);
+}
+
+// Format date for display
+export function formatDate(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+}
+
+// Format datetime for display
+export function formatDateTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+// Generate unique ID
+export function generateId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+// Local storage helpers with SSR safety
+export function getStorageItem(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(key);
+}
+
+export function setStorageItem(key: string, value: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, value);
+}
+
+export function removeStorageItem(key: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(key);
+}
+
+// Parse JSON safely from storage
+export function getStorageJSON<T>(key: string, defaultValue: T): T {
+  if (typeof window === 'undefined') return defaultValue;
+  
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+
+export function setStorageJSON<T>(key: string, value: T): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+// File upload helpers
+export function validateImageFile(file: File, maxSizeMB: number = 5): string | null {
+  if (!file.type.startsWith('image/')) {
+    return '请选择有效的图片文件';
+  }
+  
+  if (file.size > maxSizeMB * 1024 * 1024) {
+    return `图片大小不能超过${maxSizeMB}MB`;
+  }
+  
+  return null;
+}
+
+export function readFileAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target?.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Filter and search helpers
+export function filterResources<T extends { title: string; description: string; tags: string[] }>(
+  items: T[],
+  query: string
+): T[] {
+  if (!query.trim()) return items;
+  
+  const lowerQuery = query.toLowerCase();
+  return items.filter(
+    (item) =>
+      item.title.toLowerCase().includes(lowerQuery) ||
+      item.description.toLowerCase().includes(lowerQuery) ||
+      item.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))
+  );
+}
+
+// Sort resources
+export function sortResources<T extends { title: string; featured?: boolean; createdAt?: number }>(
+  items: T[],
+  sortBy: 'title' | 'category' = 'title',
+  order: 'asc' | 'desc' = 'asc'
+): T[] {
+  return [...items].sort((a, b) => {
+    // Featured items first
+    if (a.featured && !b.featured) return -1;
+    if (!a.featured && b.featured) return 1;
+    
+    // Then sort by creation time (newest first)
+    const aCreated = a.createdAt || 0;
+    const bCreated = b.createdAt || 0;
+    if (aCreated !== bCreated) {
+      return bCreated - aCreated;
+    }
+    
+    // Then sort by specified field
+    const aValue = a[sortBy as keyof T] as string;
+    const bValue = b[sortBy as keyof T] as string;
+    
+    const comparison = aValue.localeCompare(bValue, 'zh-CN');
+    return order === 'asc' ? comparison : -comparison;
+  });
+}
+
+// Truncate text
+export function truncate(str: string, maxLength: number): string {
+  if (str.length <= maxLength) return str;
+  return str.slice(0, maxLength - 3) + '...';
+}
+
