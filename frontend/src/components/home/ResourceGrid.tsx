@@ -82,7 +82,7 @@ export function ResourceGrid({
   }
 
   // Resource grid
-  const showPercentageTip = activeCategory === '星芒学社' && percentage !== undefined && percentage < 100;
+  const showPercentageTip = (activeCategory === '星芒学社' || activeCategory === '图库') && percentage !== undefined && percentage < 100;
 
   return (
     <>
@@ -92,7 +92,7 @@ export function ResourceGrid({
         ))}
       </div>
       
-      {/* 星芒学社可见度提示 */}
+      {/* 可见度提示（星芒学社和图库） */}
       {showPercentageTip && (
         <div className="mt-12 flex flex-col items-center justify-center py-8 px-6 border border-dashed border-border rounded-2xl bg-surfaceHighlight/30">
           <div className="flex items-center gap-3 mb-4">

@@ -60,6 +60,9 @@ logs/
 .next/
 out/
 
+# Git hooks (installed hooks are in .git/hooks, not tracked)
+# .githooks/ is tracked for version control
+
 # 本地环境变量（不提交到 git）
 .env
 .env.local

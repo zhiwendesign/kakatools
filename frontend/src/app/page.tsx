@@ -160,7 +160,7 @@ export default function HomePage() {
   // Get filtered resources
   const filteredResources = useMemo(() => {
     // Get percentage from starlightKeyInfo if viewing 星芒学社
-    // If not logged in, default to 20% for 星芒学社
+    // If not logged in, default to 20% for 星芒学社 and 图库
     let percentage: number | undefined = undefined;
     if (activeCategory === '星芒学社') {
       if (starlightKeyInfo?.percentage !== undefined) {
@@ -169,6 +169,9 @@ export default function HomePage() {
         // 未登录用户默认看到20%
         percentage = 20;
       }
+    } else if (activeCategory === '图库' && !isLoggedIn) {
+      // 未登录用户访问图库时默认看到20%
+      percentage = 20;
     }
     
     return getFilteredResources(
@@ -318,7 +321,7 @@ export default function HomePage() {
             ? (starlightKeyInfo?.percentage !== undefined 
                 ? starlightKeyInfo.percentage 
                 : (!isLoggedIn ? 20 : undefined))
-            : undefined}
+            : (activeCategory === '图库' && !isLoggedIn ? 20 : undefined)}
         />
       </main>
 

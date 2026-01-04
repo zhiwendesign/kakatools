@@ -146,14 +146,14 @@ export function useResources(options?: UseResourcesOptions): UseResourcesReturn 
       // First, filter by category
       let items = resources.filter((item) => item.category === category);
       
-      // Apply percentage limit for 星芒学社 category
-      if (category === '星芒学社' && percentage !== undefined && percentage < 100) {
+      // Apply percentage limit for 星芒学社 and 图库 categories
+      if ((category === '星芒学社' || category === '图库') && percentage !== undefined && percentage < 100) {
         const totalCount = items.length;
         const visibleCount = Math.ceil((totalCount * percentage) / 100);
         // 保持排序，只取前 visibleCount 个
         items = items.slice(0, visibleCount);
         if (process.env.NODE_ENV === 'development') {
-          console.log(`[getFilteredResources] 星芒学社 percentage filter: ${totalCount} total, ${visibleCount} visible (${percentage}%)`);
+          console.log(`[getFilteredResources] ${category} percentage filter: ${totalCount} total, ${visibleCount} visible (${percentage}%)`);
         }
       }
 
