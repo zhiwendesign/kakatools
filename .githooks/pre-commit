@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# Git pre-commit hook to auto-update README
+# This hook automatically updates README.md with latest changes before commit
+
+README_FILE="README.md"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+# Check if README exists
+if [ ! -f "$README_FILE" ]; then
+    echo "README.md not found, skipping auto-update"
+    exit 0
+fi
+
+# Check if there are any changes to commit
+if git diff --cached --quiet && git diff --quiet; then
+    exit 0
+fi
+
+# Get list of changed files
+CHANGED_FILES=$(git diff --cached --name-only)
+
+# Check if README itself is being committed
+if echo "$CHANGED_FILES" | grep -q "^README.md$"; then
+    # README is being updated, don't modify it
+    exit 0
+fi
+
+# Check if there are significant code changes
+SIGNIFICANT_CHANGES=false
+
+# Check for changes in key directories
+if echo "$CHANGED_FILES" | grep -qE "^(frontend/src|backend/|package\.json)"; then
+    SIGNIFICANT_CHANGES=true
+fi
+
+if [ "$SIGNIFICANT_CHANGES" = true ]; then
+    # Update last modified timestamp in README if it exists
+    if grep -q "最后更新" "$README_FILE" || grep -q "Last updated" "$README_FILE"; then
+        # Update existing timestamp
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS
+            sed -i '' "s/最后更新：.*/最后更新：$TIMESTAMP/" "$README_FILE" 2>/dev/null || \
+            sed -i '' "s/Last updated:.*/Last updated: $TIMESTAMP/" "$README_FILE" 2>/dev/null
+        else
+            # Linux
+            sed -i "s/最后更新：.*/最后更新：$TIMESTAMP/" "$README_FILE" 2>/dev/null || \
+            sed -i "s/Last updated:.*/Last updated: $TIMESTAMP/" "$README_FILE" 2>/dev/null
+        fi
+    else
+        # Add timestamp at the end of README
+        echo "" >> "$README_FILE"
+        echo "---" >> "$README_FILE"
+        echo "" >> "$README_FILE"
+        echo "最后更新：$TIMESTAMP" >> "$README_FILE"
+    fi
+    
+    # Stage the updated README
+    git add "$README_FILE"
+    
+    echo "✅ README.md has been auto-updated with latest changes"
+fi
+
+exit 0
+
