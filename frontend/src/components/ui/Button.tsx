@@ -23,11 +23,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const variants = {
-      primary: 'bg-primary text-white hover:bg-primary/90',
-      secondary: 'bg-surface text-secondary border border-border hover:bg-surfaceHighlight',
-      outline: 'bg-white text-secondary border border-border hover:bg-surfaceHighlight hover:text-primary',
-      ghost: 'text-secondary hover:text-primary hover:bg-surfaceHighlight',
-      danger: 'bg-red-500 text-white hover:bg-red-600',
+      primary: 'bg-primary text-white hover:bg-primary/90 active:scale-[0.98] shadow-sm hover:shadow',
+      secondary: 'bg-white text-secondary border border-border/60 hover:bg-surfaceHighlight hover:border-primary/20 shadow-sm hover:shadow',
+      outline: 'bg-white text-secondary border border-border/60 hover:bg-surfaceHighlight hover:text-primary hover:border-primary/30 shadow-sm hover:shadow',
+      ghost: 'text-secondary hover:text-primary hover:bg-surfaceHighlight/60',
+      danger: 'bg-red-500 text-white hover:bg-red-600 active:scale-[0.98] shadow-sm hover:shadow',
     };
 
     const sizes = {
@@ -40,7 +40,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+          'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
           variants[variant],
           sizes[size],
           className

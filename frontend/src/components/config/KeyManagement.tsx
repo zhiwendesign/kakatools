@@ -70,7 +70,7 @@ function KeyItem({
   };
 
   return (
-    <div className="bg-white p-3 rounded-lg border border-border flex justify-between items-center group hover:border-primary/15 transition-colors">
+    <div className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-border/60 flex justify-between items-center group hover:border-primary/25 transition-colors shadow-sm">
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <span className="font-mono font-medium text-primary tracking-wider">{keyData.code}</span>
@@ -230,7 +230,7 @@ export function KeyManagement({ isAuthenticated, onTokenRequired }: KeyManagemen
   return (
     <div className="space-y-6">
       {/* Generate New Key */}
-      <div className="bg-white p-4 rounded-lg border border-border">
+      <div className="bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-border/60 shadow-sm">
         <h4 className="font-bold text-primary mb-4 flex items-center gap-2">
           <Icon name="plus" size={16} /> 生成新密钥
         </h4>
@@ -251,7 +251,7 @@ export function KeyManagement({ isAuthenticated, onTokenRequired }: KeyManagemen
               <select
                 value={userType}
                 onChange={(e) => setUserType(e.target.value as 'user' | 'admin')}
-                className="w-full bg-surfaceHighlight border border-transparent focus:bg-white focus:border-border rounded-xl px-4 py-3 text-sm focus:outline-none transition-all text-primary"
+                className="w-full bg-white/80 backdrop-blur-sm border border-border/60 focus:bg-white focus:border-primary/30 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all text-primary shadow-sm"
               >
                 <option value="user">普通用户 - 可访问：AiCC、UXTips、星芒学社、图库</option>
                 <option value="admin">管理员 - 可访问：Learning、星芒学社</option>
@@ -264,7 +264,7 @@ export function KeyManagement({ isAuthenticated, onTokenRequired }: KeyManagemen
                 value={duration}
                 onChange={(e) => setDuration(parseInt(e.target.value) || 30)}
                 min={1}
-                className="w-full bg-surfaceHighlight border border-transparent focus:bg-white focus:border-border rounded-xl px-4 py-3 text-sm focus:outline-none transition-all text-primary"
+                className="w-full bg-white/80 backdrop-blur-sm border border-border/60 focus:bg-white focus:border-primary/30 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all text-primary shadow-sm"
               />
             </div>
             <div className="w-32">
@@ -272,7 +272,7 @@ export function KeyManagement({ isAuthenticated, onTokenRequired }: KeyManagemen
               <select
                 value={percentage}
                 onChange={(e) => setPercentage(parseInt(e.target.value))}
-                className="w-full bg-surfaceHighlight border border-transparent focus:bg-white focus:border-border rounded-xl px-4 py-3 text-sm focus:outline-none transition-all text-primary"
+                className="w-full bg-white/80 backdrop-blur-sm border border-border/60 focus:bg-white focus:border-primary/30 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all text-primary shadow-sm"
               >
                 <option value={20}>20%</option>
                 <option value={50}>50%</option>

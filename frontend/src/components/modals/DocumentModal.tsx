@@ -71,11 +71,11 @@ export function DocumentModal({ isOpen, onClose, resource, isAdmin = false }: Do
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/30 backdrop-blur-md animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col animate-scale-in"
+        className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-2xl border border-border/40 flex flex-col animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -120,7 +120,7 @@ export function DocumentModal({ isOpen, onClose, resource, isAdmin = false }: Do
                 if (target.tagName === 'IMG') {
                   const img = target as HTMLImageElement;
                   const modal = document.createElement('div');
-                  modal.className = 'fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in';
+                  modal.className = 'fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm animate-fade-in';
                   modal.onclick = () => modal.remove();
                   
                   const imgContainer = document.createElement('div');

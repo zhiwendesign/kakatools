@@ -106,7 +106,7 @@ export function LoginModal({ isOpen, onClose, onAdminLogin, onUserLogin }: Login
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 p-1 bg-surfaceHighlight rounded-lg">
+      <div className="flex gap-2 mb-6 p-1 bg-white/60 backdrop-blur-sm rounded-lg border border-border/40">
         <button
           type="button"
           onClick={() => handleTabChange('user')}

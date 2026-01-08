@@ -34,7 +34,7 @@ export function ImageModal({ isOpen, onClose, imageUrl, title }: ImageModalProps
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
+      className="fixed inset-0 bg-gray-900/50 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in"
       onClick={onClose}
     >
       <div
@@ -44,7 +44,7 @@ export function ImageModal({ isOpen, onClose, imageUrl, title }: ImageModalProps
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors backdrop-blur-sm"
+          className="absolute top-4 right-4 z-10 p-3 bg-gray-900/60 hover:bg-gray-900/80 text-white rounded-full transition-colors backdrop-blur-sm"
           aria-label="关闭"
         >
           <Icon name="X" size={20} />
@@ -62,7 +62,7 @@ export function ImageModal({ isOpen, onClose, imageUrl, title }: ImageModalProps
 
         {/* Title */}
         {title && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-black/50 backdrop-blur-sm text-white text-sm rounded-lg">
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-gray-900/60 backdrop-blur-sm text-white text-sm rounded-lg">
             {title}
           </div>
         )}

@@ -47,12 +47,12 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
+      className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
       onClick={closeOnOverlayClick ? onClose : undefined}
     >
       <div
         className={cn(
-          'bg-white rounded-2xl max-w-md w-full p-6 relative',
+          'bg-white rounded-xl max-w-md w-full p-5 relative shadow-xl border border-border/40',
           className
         )}
         onClick={(e) => e.stopPropagation()}

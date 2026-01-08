@@ -6,7 +6,7 @@ interface FooterProps {
 
 export function Footer({ contactImage }: FooterProps) {
   return (
-    <footer className="py-12 border-t border-border/50">
+    <footer className="py-12 border-t border-border/40 bg-white/30 backdrop-blur-sm">
       <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-secondary text-[11px] uppercase tracking-wider font-medium">
         <p>&copy; {new Date().getFullYear()} AI Creative Commons.</p>
         <div className="flex gap-6 mt-4 md:mt-0 items-center">
@@ -17,7 +17,7 @@ export function Footer({ contactImage }: FooterProps) {
             </span>
             {contactImage && (
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 hidden md:block">
-                <div className="w-48 h-48 bg-white rounded-lg shadow-xl border border-border p-2">
+                <div className="w-48 h-48 bg-white/95 backdrop-blur-xl rounded-lg shadow-xl border border-border/40 p-2">
                   <img
                     src={contactImage}
                     alt="联系我"

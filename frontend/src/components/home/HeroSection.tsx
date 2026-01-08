@@ -32,23 +32,23 @@ export function HeroSection({
   const categoryFilters = filters[activeCategory] || DEFAULT_FILTERS[activeCategory] || [];
 
   return (
-    <div className="mb-12 border-b border-border pb-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
-        <div className="space-y-4">
-          <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-primary whitespace-nowrap">
+    <div className="mb-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4" style={{ marginBottom: '48px' }}>
+        <div className="space-y-2">
+          <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-primary leading-tight">
             {categoryInfo.title}
           </h2>
-          <p className="text-sm md:text-base text-secondary max-w-2xl mx-auto leading-relaxed animate-slide-up">
+          <p className="text-sm md:text-base text-secondary/90 max-w-2xl leading-relaxed">
             {categoryInfo.subtitle}
           </p>
         </div>
       </div>
 
       {/* Filters & Search Toolbar */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 w-full">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 w-full">
         {/* Filter Tabs (Scrollable on Mobile) */}
         <div className="w-full md:w-auto overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 md:mx-0 md:px-0">
-          <div className="flex gap-2 min-w-max">
+          <div className="flex gap-2.5 min-w-max">
             {categoryFilters.map((filter) => (
               <button
                 key={filter.tag}
@@ -58,10 +58,10 @@ export function HeroSection({
                   setSelectedTagFilter('');
                 }}
                 className={cn(
-                  'px-4 py-2 rounded-full text-xs font-medium transition-all duration-300 border',
+                  'px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border backdrop-blur-sm',
                   activeFilter === filter.tag && !searchQuery && !selectedTagFilter
-                    ? 'bg-primary text-white border-primary/80 shadow-md'
-                    : 'bg-white text-secondary border-border hover:border-primary/20 hover:text-primary'
+                    ? 'bg-primary text-white border-primary shadow-sm'
+                    : 'bg-white/90 text-secondary border-border/60 hover:border-primary/30 hover:text-primary hover:bg-white'
                 )}
               >
                 {filter.label}
@@ -71,7 +71,7 @@ export function HeroSection({
         </div>
 
         {/* Search Box & Tag Filter */}
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex gap-3 w-full md:w-auto">
           {/* Tag Filter Dropdown */}
           <div className="relative">
             <select
@@ -80,7 +80,7 @@ export function HeroSection({
                 setSelectedTagFilter(e.target.value);
                 setActiveFilter('All');
               }}
-              className="bg-surfaceHighlight border border-transparent focus:bg-white focus:border-border rounded-full pl-4 pr-8 py-2 text-xs focus:outline-none transition-all appearance-none cursor-pointer text-secondary hover:text-primary min-w-[120px]"
+              className="bg-white/90 backdrop-blur-sm border border-border/60 focus:bg-white focus:border-primary/40 rounded-lg pl-3 pr-7 py-1.5 text-xs focus:outline-none transition-all appearance-none cursor-pointer text-secondary hover:text-primary min-w-[120px] shadow-sm hover:shadow"
             >
               <option value="">全部标签</option>
               {availableTags.map((tag) => (
@@ -111,7 +111,7 @@ export function HeroSection({
                   setActiveFilter('All');
                 }
               }}
-              className="w-full bg-surfaceHighlight border border-transparent focus:bg-white focus:border-border rounded-full pl-9 pr-4 py-2 text-xs focus:outline-none transition-all placeholder:text-secondary/70"
+              className="w-full bg-white/90 backdrop-blur-sm border border-border/60 focus:bg-white focus:border-primary/40 rounded-lg pl-8 pr-10 py-1.5 text-xs focus:outline-none transition-all placeholder:text-secondary/60 shadow-sm hover:shadow focus:shadow-md"
             />
             {searchQuery && (
               <button

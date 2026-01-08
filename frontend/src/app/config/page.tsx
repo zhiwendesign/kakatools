@@ -223,7 +223,7 @@ export default function ConfigPage() {
         <ConfigHeader isAuthenticated={false} onLogout={logout} />
 
         <div className="container mx-auto px-4 md:px-6 py-12 animate-fade-in">
-          <div className="flex flex-col items-center justify-center py-32 border border-dashed border-border rounded-2xl bg-surface-highlight/30">
+          <div className="flex flex-col items-center justify-center py-32 border border-dashed border-border/60 rounded-2xl bg-white/50 backdrop-blur-sm shadow-sm">
             <div className="p-4 bg-surface rounded-full mb-4 shadow-sm">
               <Icon name="lock" size={24} className="text-secondary/50" />
             </div>
@@ -350,9 +350,9 @@ export default function ConfigPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Sidebar */}
           <div className="lg:col-span-4 min-w-0">
-            <div className="bg-surface border border-border rounded-2xl p-6 min-w-0">
+            <div className="bg-white/80 backdrop-blur-sm border border-border/60 rounded-2xl p-6 min-w-0 shadow-sm">
               {/* Tab Navigation */}
-              <div className="flex bg-surface-highlight rounded-lg p-1 mb-4 gap-1 min-w-0">
+              <div className="flex bg-white/60 backdrop-blur-sm rounded-lg p-1 mb-4 gap-1 min-w-0 border border-border/40">
                 {CATEGORY_TABS.map((tab) => (
                   <button
                     key={tab}
@@ -424,7 +424,7 @@ export default function ConfigPage() {
 
           {/* Editor Panel */}
           <div className="lg:col-span-8">
-            <div className="bg-surface border border-border rounded-2xl shadow-sm min-h-[500px]">
+            <div className="bg-white/80 backdrop-blur-sm border border-border/60 rounded-2xl shadow-sm min-h-[500px]">
               {editorView === 'header' && isAdminLogin ? (
                 <HeaderConfig onSave={() => {}} />
               ) : editorView === 'keys' && isAdminLogin ? (

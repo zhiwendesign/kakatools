@@ -62,7 +62,7 @@ export function Header({
   });
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-border">
+    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-border/60 shadow-sm">
       <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link 
@@ -73,7 +73,7 @@ export function Header({
             setActiveCategory('AiCC');
           }}
         >
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-black/10 overflow-hidden">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-gray-900/10 overflow-hidden">
             {headerConfig.avatarImage ? (
               <img
                 src={headerConfig.avatarImage}
@@ -95,24 +95,32 @@ export function Header({
 
         {/* Category Toggle */}
         <div className="absolute left-1/2 transform -translate-x-1/2">
-          <div className="flex p-1 bg-surfaceHighlight rounded-full border border-border/50">
+          <div className="flex p-1 bg-surfaceHighlight/60 backdrop-blur-md rounded-full border border-border/50 shadow-sm">
             {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
                 className={cn(
-                  'px-6 py-1.5 rounded-full text-xs font-semibold transition-all duration-300',
+                  'px-6 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 relative',
                   activeCategory === cat.id
-                    ? cat.special
-                      ? 'bg-purple-600 text-white shadow-md shadow-purple-200'
-                      : 'bg-white text-primary shadow-sm ring-1 ring-black/5'
-                    : 'text-secondary hover:text-primary'
+                    ? 'bg-white text-primary shadow-sm'
+                    : 'bg-transparent text-secondary hover:text-primary'
                 )}
               >
-                <span className="flex items-center gap-1.5">
-                  <Icon name={cat.icon} size={12} />
-                  {cat.label}
-                </span>
+                <Icon 
+                  name={cat.icon} 
+                  size={12} 
+                  className={cn(
+                    'transition-colors duration-200',
+                    activeCategory === cat.id 
+                      ? 'text-primary' 
+                      : 'text-secondary'
+                  )} 
+                />
+                <span className={cn(
+                  'transition-colors duration-200',
+                  activeCategory === cat.id && 'text-primary'
+                )}>{cat.label}</span>
               </button>
             ))}
           </div>

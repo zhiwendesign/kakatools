@@ -32,7 +32,7 @@ export function ConfigHeader({ isAuthenticated, onLogout }: ConfigHeaderProps) {
       <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 cursor-pointer" onClick={handleLogoClick}>
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-black/10">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-gray-900/10">
             <span className="text-white font-bold text-lg leading-none">K</span>
           </div>
           <div className="hidden md:block">

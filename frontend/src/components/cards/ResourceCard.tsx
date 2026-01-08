@@ -31,14 +31,14 @@ export function ResourceCard({ item, onEdit }: ResourceCardProps) {
 
   return (
     <>
-      <div className="group relative flex flex-col bg-surface border border-border rounded-2xl overflow-hidden transition-all duration-500 hover:border-primary/20 hover:shadow-lg hover:-translate-y-1">
+      <div className="group relative flex flex-col bg-white border border-border/80 rounded-xl overflow-hidden transition-all duration-300 ease-out hover:border-border/80 hover:shadow-lg hover:-translate-y-0.5 shadow-sm hover:shadow-md">
       {/* Image Section */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-surfaceHighlight">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-surfaceHighlight/50">
         {(item.imageUrl || (isImage && item.content)) ? (
           <img
             src={isImage && item.content ? item.content : item.imageUrl}
             alt={item.title}
-            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 opacity-90 group-hover:opacity-100 grayscale-[20%] group-hover:grayscale-0"
+            className="h-full w-full object-cover transition-all duration-500 ease-out group-hover:scale-[1.02] opacity-95 group-hover:opacity-100"
             loading="lazy"
             onError={(e) => {
               // 使用安全的备用图片，避免ORB阻止
@@ -56,19 +56,19 @@ export function ResourceCard({ item, onEdit }: ResourceCardProps) {
             <Icon name="Image" size={32} className="text-secondary/30" />
           </div>
         )}
-        <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent group-hover:from-transparent transition-all duration-300" />
         
         {/* Featured Badge */}
         {item.featured && (
-          <div className="absolute top-3 left-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg animate-pulse">
-            <Icon name="Sparkles" size={12} />
-            <span className="tracking-wide">卡卡推荐</span>
+          <div className="absolute top-3 left-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white px-2.5 py-1 rounded-full text-[10px] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-sm">
+            <Icon name="Sparkles" size={10} />
+            <span className="tracking-tight">卡卡推荐</span>
           </div>
         )}
         
         {/* Content Type Badge */}
         {item.contentType === 'document' && (
-          <div className="absolute top-3 right-3 bg-primary/90 text-white px-2.5 py-1 rounded-full text-[10px] font-medium flex items-center gap-1 shadow-lg">
+          <div className="absolute top-3 right-3 bg-primary/95 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-[10px] font-medium flex items-center gap-1 shadow-md">
             <Icon name="FileText" size={10} />
             <span>文档</span>
           </div>
@@ -76,30 +76,35 @@ export function ResourceCard({ item, onEdit }: ResourceCardProps) {
       </div>
 
       {/* Content Section */}
-      <div className="flex flex-col flex-grow p-5 pt-4">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-lg font-semibold text-primary tracking-tight group-hover:underline decoration-1 underline-offset-4 decoration-primary/20 transition-all">
+      <div className="flex flex-col flex-grow p-4">
+        <div className="flex justify-between items-start mb-2.5">
+          <h3 className="text-base font-semibold text-primary tracking-tight leading-snug group-hover:text-primary/80 transition-colors pr-2">
             {item.title}
           </h3>
-          <div className="w-8 h-8 rounded-full bg-surfaceHighlight flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-            <Icon name="ArrowUpRight" size={14} className="text-primary" />
+          <div className="w-6 h-6 rounded-md bg-surfaceHighlight/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 flex-shrink-0">
+            <Icon name="ArrowUpRight" size={12} className="text-primary/70" />
           </div>
         </div>
 
-        <p className="text-secondary text-xs leading-relaxed mb-6 line-clamp-2">
+        <p className="text-secondary text-xs leading-relaxed mb-4 line-clamp-2 min-h-[2.5rem]">
           {item.description}
         </p>
 
         {/* Tags */}
-        <div className="mt-auto flex flex-wrap gap-2">
-          {item.tags.map((tag, idx) => (
+        <div className="mt-auto flex flex-wrap gap-1.5">
+          {item.tags.slice(0, 3).map((tag, idx) => (
             <span
               key={`${item.id}-tag-${idx}`}
-              className="px-2.5 py-1 text-[10px] font-medium text-secondary bg-surfaceHighlight border border-transparent hover:border-primary/10 rounded-md transition-colors cursor-default"
+              className="px-2 py-0.5 text-[10px] font-medium text-secondary/80 bg-surfaceHighlight/60 border border-border/40 hover:border-primary/20 rounded-md transition-colors cursor-default"
             >
               {tag}
             </span>
           ))}
+          {item.tags.length > 3 && (
+            <span className="px-2 py-0.5 text-[10px] font-medium text-secondary/60">
+              +{item.tags.length - 3}
+            </span>
+          )}
         </div>
       </div>
 

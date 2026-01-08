@@ -5,24 +5,47 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --background: #ffffff;
+  --background: #fafbfc;
   --surface: #ffffff;
-  --surface-highlight: #f4f4f5;
-  --border: #e4e4e7;
-  --primary: #09090b;
-  --secondary: #71717a;
-  --accent: #a1a1aa;
+  --surface-highlight: #f6f8fa;
+  --border: #d0d7de;
+  --primary: #24292f;
+  --secondary: #656d76;
+  --accent: #8b949e;
+  --gradient-start: #fafbfc;
+  --gradient-end: #f6f8fa;
+  --card-shadow: rgba(140, 149, 158, 0.06);
+  --card-shadow-hover: rgba(140, 149, 158, 0.15);
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
 }
 
 body {
-  background-color: var(--background);
-  background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
-  background-size: 24px 24px;
+  background: linear-gradient(135deg, #fafbfc 0%, #f6f8fa 50%, #f0f3f6 100%);
+  background-image: 
+    radial-gradient(circle at 1px 1px, rgba(140, 149, 158, 0.2) 1px, transparent 0);
+  background-size: 20px 20px;
   background-attachment: fixed;
+  min-height: 100vh;
   color: var(--primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  position: relative;
+  line-height: 1.6;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Scrollbar Styles */
@@ -45,12 +68,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #e4e4e7;
+  background: #d1d5db;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #d4d4d8;
+  background: #9ca3af;
 }
 
 /* Custom Utilities */
@@ -85,26 +108,33 @@ body {
 
 /* Card Hover Effects */
 .card-hover {
-  @apply transition-all duration-500 hover:border-primary/20 hover:shadow-lg hover:-translate-y-1;
+  @apply transition-all duration-300 ease-out hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
 
 /* Button Base */
 .btn-primary {
-  @apply px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors;
+  @apply px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 active:scale-[0.98] transition-all shadow-sm hover:shadow;
 }
 
 .btn-secondary {
-  @apply px-4 py-2 bg-surface text-secondary border border-border rounded-lg text-sm font-medium hover:bg-surfaceHighlight transition-colors;
+  @apply px-4 py-2 bg-white text-secondary border border-border/60 rounded-lg text-sm font-medium hover:bg-surfaceHighlight hover:border-primary/20 transition-all shadow-sm hover:shadow;
 }
 
 /* Input Base */
 .input-base {
-  @apply w-full bg-surfaceHighlight border border-transparent focus:bg-white focus:border-border rounded-xl px-4 py-3 text-sm focus:outline-none transition-all;
+  @apply w-full bg-white/90 backdrop-blur-sm border border-border/60 focus:bg-white focus:border-primary/40 rounded-lg px-4 py-2.5 text-sm focus:outline-none transition-all shadow-sm hover:shadow focus:shadow-md;
 }
 
 /* Modal Overlay */
 .modal-overlay {
-  @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4;
+  @apply fixed inset-0 bg-gray-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4;
 }
 
 /* Filter Button */

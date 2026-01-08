@@ -38,7 +38,7 @@ export function ResourceGrid({
   // Error state (only show if we have an error and no resources)
   if (error && resources.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 border border-dashed border-border rounded-2xl bg-surfaceHighlight/30">
+      <div className="flex flex-col items-center justify-center py-24 border border-dashed border-border/60 rounded-xl bg-white/60 backdrop-blur-sm">
         <div className="p-4 bg-surface rounded-full mb-4 shadow-sm">
           <Icon name="AlertCircle" size={24} className="text-red-500/50" />
         </div>
@@ -58,7 +58,7 @@ export function ResourceGrid({
   // Empty state
   if (resources.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 border border-dashed border-border rounded-2xl bg-surfaceHighlight/30">
+      <div className="flex flex-col items-center justify-center py-24 border border-dashed border-border/60 rounded-xl bg-white/60 backdrop-blur-sm">
         <div className="p-4 bg-surface rounded-full mb-4 shadow-sm">
           {activeFilter === '卡卡推荐' ? (
             <Icon name="Star" size={24} className="text-amber-500/50" />
@@ -86,7 +86,7 @@ export function ResourceGrid({
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {resources.map((item) => (
           <ResourceCard key={item.id} item={item} />
         ))}
@@ -94,7 +94,7 @@ export function ResourceGrid({
       
       {/* 可见度提示（星芒学社和图库） */}
       {showPercentageTip && (
-        <div className="mt-12 flex flex-col items-center justify-center py-8 px-6 border border-dashed border-border rounded-2xl bg-surfaceHighlight/30">
+        <div className="mt-10 flex flex-col items-center justify-center py-6 px-6 border border-dashed border-border/60 rounded-xl bg-white/60 backdrop-blur-sm">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2.5 bg-surface rounded-full">
               <Icon name="Info" size={18} className="text-primary" />
