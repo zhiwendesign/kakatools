@@ -194,6 +194,8 @@ export default function ConfigPage() {
       const result = await apiLogin(password);
       if (result.success && result.token) {
         login(result.token);
+        // Wait a bit for state to update
+        await new Promise(resolve => setTimeout(resolve, 100));
         setShowTokenModal(false);
         return true;
       }
@@ -216,8 +218,12 @@ export default function ConfigPage() {
     );
   }
 
+  // Re-check admin status after auth loading completes
+  // This ensures we have the latest auth state
+  const hasAdminAccess = isAuthenticated || (starlightAccess && starlightKeyInfo?.userType === 'admin');
+
   // Auth check - show login modal if not authenticated (admin login or admin key)
-  if (!isAdminUser) {
+  if (!hasAdminAccess) {
     return (
       <div className="min-h-screen bg-background">
         <ConfigHeader isAuthenticated={false} onLogout={logout} />
@@ -426,7 +432,7 @@ export default function ConfigPage() {
           <div className="lg:col-span-8">
             <div className="bg-white/80 backdrop-blur-sm border border-border/60 rounded-2xl shadow-sm min-h-[500px]">
               {editorView === 'header' && isAdminLogin ? (
-                <HeaderConfig onSave={() => {}} />
+                <HeaderConfig onSave={() => {}} token={token} />
               ) : editorView === 'keys' && isAdminLogin ? (
                 <div className="p-8 animate-fade-in">
                   <div className="mb-8 pb-4 border-b border-border">

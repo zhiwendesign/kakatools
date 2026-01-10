@@ -39,12 +39,12 @@ export function Header({
   onLoginClick,
   isLoggedIn,
 }: HeaderProps) {
-  const allCategories: { id: CategoryType; label: string; icon: IconName; special?: boolean; adminOnly?: boolean }[] = [
-    { id: 'AiCC', label: 'AiCC', icon: 'Bot' },
-    { id: 'UXTips', label: 'UXTips', icon: 'Palette' },
-    { id: 'Learning', label: 'Learning', icon: 'FileText', adminOnly: true },
-    { id: '星芒学社', label: '星芒学社', icon: 'Sparkles', special: true },
-    { id: '图库', label: '图库', icon: 'Image', special: true },
+  const allCategories: { id: CategoryType; label: string; icon: IconName; emoji: string; special?: boolean; adminOnly?: boolean; color?: string }[] = [
+    { id: 'AiCC', label: 'AiCC', icon: 'Bot', emoji: '🤖', color: 'text-blue-600' },
+    { id: 'UXTips', label: 'UXTips', icon: 'Palette', emoji: '🎨', color: 'text-purple-600' },
+    { id: 'Learning', label: 'Learning', icon: 'FileText', emoji: '📚', adminOnly: true, color: 'text-green-600' },
+    { id: '星芒学社', label: '星芒学社', icon: 'Sparkles', emoji: '✨', special: true, color: 'text-amber-600' },
+    { id: '图库', label: '图库', icon: 'Image', emoji: '🖼️', special: true, color: 'text-cyan-600' },
   ];
   
   // Check if user has admin access (either admin login or admin-type key)
@@ -96,33 +96,50 @@ export function Header({
         {/* Category Toggle */}
         <div className="absolute left-1/2 transform -translate-x-1/2">
           <div className="flex p-1 bg-surfaceHighlight/60 backdrop-blur-md rounded-full border border-border/50 shadow-sm">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={cn(
-                  'px-6 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 relative',
-                  activeCategory === cat.id
-                    ? 'bg-white text-primary shadow-sm'
-                    : 'bg-transparent text-secondary hover:text-primary'
-                )}
-              >
-                <Icon 
-                  name={cat.icon} 
-                  size={12} 
+            {categories.map((cat) => {
+              const isActive = activeCategory === cat.id;
+              const iconColor = cat.color || 'text-primary';
+              
+              // Map color classes to hover variants
+              const hoverColorMap: Record<string, string> = {
+                'text-blue-600': 'group-hover:text-blue-600',
+                'text-purple-600': 'group-hover:text-purple-600',
+                'text-green-600': 'group-hover:text-green-600',
+                'text-amber-600': 'group-hover:text-amber-600',
+                'text-cyan-600': 'group-hover:text-cyan-600',
+                'text-primary': 'group-hover:text-primary',
+              };
+              
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
                   className={cn(
+                    'px-6 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 relative group',
+                    isActive
+                      ? 'bg-white text-primary shadow-sm'
+                      : 'bg-transparent text-secondary hover:text-primary'
+                  )}
+                >
+                  {isActive ? (
+                    <span className="text-base leading-none">{cat.emoji}</span>
+                  ) : (
+                    <Icon 
+                      name={cat.icon} 
+                      size={12} 
+                      className={cn(
+                        'transition-colors duration-200',
+                        cn('text-secondary', hoverColorMap[iconColor] || 'group-hover:text-primary')
+                      )} 
+                    />
+                  )}
+                  <span className={cn(
                     'transition-colors duration-200',
-                    activeCategory === cat.id 
-                      ? 'text-primary' 
-                      : 'text-secondary'
-                  )} 
-                />
-                <span className={cn(
-                  'transition-colors duration-200',
-                  activeCategory === cat.id && 'text-primary'
-                )}>{cat.label}</span>
-              </button>
-            ))}
+                    isActive && 'text-primary'
+                  )}>{cat.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

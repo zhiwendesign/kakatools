@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import { HeaderConfig as HeaderConfigType } from '@/types';
 import { Button, Icon, Input } from '@/components/ui';
-import { STORAGE_KEYS } from '@/constants';
+import { fetchHeaderConfig, saveHeaderConfig } from '@/lib/api';
 
 interface HeaderConfigProps {
   onSave: () => void;
+  token: string | null;
 }
 
-export function HeaderConfig({ onSave }: HeaderConfigProps) {
+export function HeaderConfig({ onSave, token }: HeaderConfigProps) {
   const [headerConfig, setHeaderConfig] = useState<HeaderConfigType>({
     avatar: 'K',
     avatarImage: null,
@@ -17,17 +18,28 @@ export function HeaderConfig({ onSave }: HeaderConfigProps) {
   });
   const [contactImage, setContactImage] = useState<string | null>(null);
   const [cooperationImage, setCooperationImage] = useState<string | null>(null);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
-  // Load from localStorage on mount
+  // Load from backend API on mount
   useEffect(() => {
-    setHeaderConfig({
-      avatar: localStorage.getItem(STORAGE_KEYS.HEADER_AVATAR) || 'K',
-      avatarImage: localStorage.getItem(STORAGE_KEYS.HEADER_AVATAR_IMAGE),
-      title: localStorage.getItem(STORAGE_KEYS.HEADER_TITLE) || 'Al Creative Commons',
-    });
-    setContactImage(localStorage.getItem(STORAGE_KEYS.CONTACT_IMAGE));
-    setCooperationImage(localStorage.getItem(STORAGE_KEYS.COOPERATION_IMAGE));
+    const loadConfig = async () => {
+      try {
+        const response = await fetchHeaderConfig();
+        if (response.success && response.config) {
+          setHeaderConfig({
+            avatar: response.config.avatar || 'K',
+            avatarImage: response.config.avatarImage || null,
+            title: response.config.title || 'Al Creative Commons',
+          });
+          setContactImage(response.config.contactImage || null);
+          setCooperationImage(response.config.cooperationImage || null);
+        }
+      } catch (error) {
+        console.error('Failed to load header config:', error);
+      }
+    };
+    loadConfig();
   }, []);
 
   const handleImageUpload = (
@@ -54,33 +66,46 @@ export function HeaderConfig({ onSave }: HeaderConfigProps) {
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
-    // Save header config
-    localStorage.setItem(STORAGE_KEYS.HEADER_AVATAR, headerConfig.avatar);
-    localStorage.setItem(STORAGE_KEYS.HEADER_TITLE, headerConfig.title);
-    if (headerConfig.avatarImage) {
-      localStorage.setItem(STORAGE_KEYS.HEADER_AVATAR_IMAGE, headerConfig.avatarImage);
-    } else {
-      localStorage.removeItem(STORAGE_KEYS.HEADER_AVATAR_IMAGE);
+  const handleSave = async () => {
+    if (!token) {
+      setErrorMessage('需要管理员权限才能保存配置');
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+      return;
     }
 
-    // Save contact image
-    if (contactImage) {
-      localStorage.setItem(STORAGE_KEYS.CONTACT_IMAGE, contactImage);
-    } else {
-      localStorage.removeItem(STORAGE_KEYS.CONTACT_IMAGE);
-    }
+    setSaveStatus('saving');
+    setErrorMessage('');
 
-    // Save cooperation image
-    if (cooperationImage) {
-      localStorage.setItem(STORAGE_KEYS.COOPERATION_IMAGE, cooperationImage);
-    } else {
-      localStorage.removeItem(STORAGE_KEYS.COOPERATION_IMAGE);
-    }
+    try {
+      const response = await saveHeaderConfig(token, {
+        avatar: headerConfig.avatar,
+        avatarImage: headerConfig.avatarImage,
+        title: headerConfig.title,
+        contactImage: contactImage,
+        cooperationImage: cooperationImage,
+      });
 
-    setSaveStatus('saved');
-    onSave();
-    setTimeout(() => setSaveStatus('idle'), 2000);
+      if (response.success) {
+        setSaveStatus('saved');
+        onSave();
+        setTimeout(() => setSaveStatus('idle'), 2000);
+        
+        // 通知所有页面重新加载配置（通过自定义事件）
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('headerConfigUpdated'));
+        }
+      } else {
+        setErrorMessage(response.message || '保存失败');
+        setSaveStatus('error');
+        setTimeout(() => setSaveStatus('idle'), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to save header config:', error);
+      setErrorMessage('网络错误，请稍后重试');
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    }
   };
 
   return (
@@ -256,12 +281,23 @@ export function HeaderConfig({ onSave }: HeaderConfigProps) {
 
         {/* Save Button */}
         <div className="pt-4 border-t border-border">
+          {errorMessage && (
+            <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {errorMessage}
+            </div>
+          )}
           <Button
             onClick={handleSave}
             className="w-full"
             variant={saveStatus === 'saved' ? 'secondary' : 'primary'}
+            disabled={saveStatus === 'saving'}
           >
-            {saveStatus === 'saved' ? (
+            {saveStatus === 'saving' ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                保存中...
+              </>
+            ) : saveStatus === 'saved' ? (
               '✅ 配置已保存!'
             ) : (
               <>

@@ -82,6 +82,7 @@ export function ResourceGrid({
   }
 
   // Resource grid
+  // 显示百分比提示：当 percentage 有值且小于 100 时显示（适用于星芒学社和图库）
   const showPercentageTip = percentage !== undefined && percentage < 100;
 
   return (

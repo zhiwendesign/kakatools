@@ -65,10 +65,15 @@ app.use((req, res, next) => {
 
 // 请求限流（优化的限流器）
 const rateLimiter = new RateLimiter(60 * 1000, 100); // 1分钟，100个请求
+// 登录端点专用限流器（更宽松：1分钟内10次尝试）
+const loginRateLimiter = new RateLimiter(60 * 1000, 10); // 1分钟，10次登录尝试
 
 const rateLimitMiddleware = (req, res, next) => {
-  // 跳过健康检查端点的限流
-  if (req.path === '/api/health') {
+  // 跳过健康检查和登录相关端点的限流（登录端点使用专门的限流器）
+  if (req.path === '/api/health' || 
+      req.path === '/api/auth/login' || 
+      req.path === '/api/auth/verify' ||
+      req.path === '/api/keys/verify') {
     return next();
   }
   
@@ -302,6 +307,25 @@ const getClientIp = (req) => {
 // Login Endpoint
 app.post('/api/auth/login', async (req, res, next) => {
   try {
+    // 应用登录专用速率限制
+    const clientIp = getClientIp(req);
+    const loginLimitResult = loginRateLimiter.check(clientIp);
+    
+    if (!loginLimitResult.allowed) {
+      const resetTime = new Date(loginLimitResult.resetAt).toISOString();
+      res.set('X-RateLimit-Limit', '10');
+      res.set('X-RateLimit-Remaining', '0');
+      res.set('X-RateLimit-Reset', loginLimitResult.resetAt.toString());
+      return res.status(429).json({
+        success: false,
+        message: '登录尝试过于频繁，请稍后再试',
+        resetAt: resetTime
+      });
+    }
+    
+    res.set('X-RateLimit-Limit', '10');
+    res.set('X-RateLimit-Remaining', loginLimitResult.remaining.toString());
+    
     const { password } = req.body;
 
     if (!password || typeof password !== 'string') {
@@ -925,6 +949,88 @@ app.delete('/api/filters/:category/:tag', requireAuth, (req, res, next) => {
     } else {
       res.status(404).json({ success: false, message: 'Filter not found' });
     }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ==================== Header Config Routes ====================
+
+// Get header config (Public)
+app.get('/api/config/header', (req, res, next) => {
+  try {
+    const avatar = adminSettings.get('header_avatar') || 'K';
+    const avatarImageRaw = adminSettings.get('header_avatar_image');
+    const title = adminSettings.get('header_title') || 'Al Creative Commons';
+    const contactImageRaw = adminSettings.get('contact_image');
+    const cooperationImageRaw = adminSettings.get('cooperation_image');
+    
+    // 如果值为空字符串，返回 null
+    const avatarImage = avatarImageRaw && avatarImageRaw.trim() !== '' ? avatarImageRaw : null;
+    const contactImage = contactImageRaw && contactImageRaw.trim() !== '' ? contactImageRaw : null;
+    const cooperationImage = cooperationImageRaw && cooperationImageRaw.trim() !== '' ? cooperationImageRaw : null;
+    
+    res.json({
+      success: true,
+      config: {
+        avatar,
+        avatarImage,
+        title,
+        contactImage,
+        cooperationImage,
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Save header config (Admin Only)
+app.post('/api/config/header', requireAuth, (req, res, next) => {
+  try {
+    const { avatar, avatarImage, title, contactImage, cooperationImage } = req.body;
+    
+    // 验证必填字段
+    if (!avatar || !title) {
+      return res.status(400).json({ success: false, message: '头像和标题不能为空' });
+    }
+    
+    // 保存配置
+    adminSettings.set('header_avatar', avatar);
+    adminSettings.set('header_title', title);
+    
+    if (avatarImage) {
+      adminSettings.set('header_avatar_image', avatarImage);
+    } else {
+      // 如果传 null 或空字符串，删除配置（设置为空字符串，前端会处理为 null）
+      adminSettings.set('header_avatar_image', '');
+    }
+    
+    if (contactImage) {
+      adminSettings.set('contact_image', contactImage);
+    } else {
+      adminSettings.set('contact_image', '');
+    }
+    
+    if (cooperationImage) {
+      adminSettings.set('cooperation_image', cooperationImage);
+    } else {
+      adminSettings.set('cooperation_image', '');
+    }
+    
+    logger.info('Header config updated', { avatar, title });
+    
+    res.json({
+      success: true,
+      message: '头部配置已保存',
+      config: {
+        avatar,
+        avatarImage: avatarImage || null,
+        title,
+        contactImage: contactImage || null,
+        cooperationImage: cooperationImage || null,
+      }
+    });
   } catch (error) {
     next(error);
   }

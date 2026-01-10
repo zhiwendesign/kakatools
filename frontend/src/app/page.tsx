@@ -32,6 +32,15 @@ export default function HomePage() {
     reload: reloadResources,
   } = useResources({ authToken: isAuthenticated ? token : null });
 
+  // Reload resources when authentication state or token changes
+  useEffect(() => {
+    // Delay reload to ensure token is properly set
+    const timer = setTimeout(() => {
+      reloadResources();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, token, reloadResources]);
+
   // Header config hook
   const {
     headerConfig,
@@ -143,10 +152,14 @@ export default function HomePage() {
     };
   }, [reloadResources]);
 
-  // Reload resources when authentication state changes
+  // Reload resources when authentication state or token changes
   useEffect(() => {
-    reloadResources();
-  }, [isAuthenticated, reloadResources]);
+    // Small delay to ensure token is stored before reloading
+    const timer = setTimeout(() => {
+      reloadResources();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, token, reloadResources]);
 
   // Get filtered resources
   // Visibility rules:
@@ -190,7 +203,10 @@ export default function HomePage() {
   const handleAdminLogin = (token: string) => {
     login(token);
     setShowLoginModal(false);
-    router.push('/config');
+    // Wait a bit for auth state to update before navigating
+    setTimeout(() => {
+      router.push('/config');
+    }, 100);
   };
 
   // Handle regular user login

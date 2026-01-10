@@ -190,4 +190,3 @@ export function getVisibilityPercentage(
   // Logged in without percentage setting means 100% visible
   return undefined;
 }
-

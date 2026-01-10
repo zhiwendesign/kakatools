@@ -144,10 +144,17 @@ export function LoginModal({ isOpen, onClose, onAdminLogin, onUserLogin }: Login
               type="text"
               value={userKey}
               onChange={(e) => setUserKey(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !isLoading && userKey.trim().length >= 32) {
+                  e.preventDefault();
+                  handleUserSubmit(e as any);
+                }
+              }}
               className="w-full bg-surfaceHighlight border-2 border-transparent focus:bg-white focus:border-purple-500 rounded-xl px-4 py-3 text-center text-lg font-mono tracking-widest uppercase transition-all outline-none placeholder-gray-300"
               placeholder="YOUR-ACCESS-KEY-HERE"
               maxLength={32}
               autoFocus
+              autoComplete="off"
             />
             <p className="text-xs text-secondary text-center mt-2">
               请输入您的访问密钥以查看 AiCC、UXTips、星芒学社 和 图库 内容
@@ -187,13 +194,21 @@ export function LoginModal({ isOpen, onClose, onAdminLogin, onUserLogin }: Login
             <label className="text-xs font-bold text-secondary uppercase tracking-wider">
               管理员密码
             </label>
-            <Input
+            <input
               type="password"
               value={adminPassword}
               onChange={(e) => setAdminPassword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !isLoading && adminPassword.trim()) {
+                  e.preventDefault();
+                  handleAdminSubmit(e as any);
+                }
+              }}
+              className="w-full bg-white/90 backdrop-blur-sm border border-border/60 focus:bg-white focus:border-primary/40 rounded-lg px-4 py-2.5 text-sm focus:outline-none transition-all shadow-sm hover:shadow focus:shadow-md"
               placeholder="请输入管理员密码"
               autoFocus
               disabled={isLoading}
+              autoComplete="current-password"
             />
             <p className="text-xs text-secondary text-center mt-2">
               管理员可访问所有内容，包括配置管理功能

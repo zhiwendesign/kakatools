@@ -33,7 +33,8 @@ interface UseResourcesReturn {
     activeFilter: string,
     searchQuery: string,
     tagFilter: string,
-    isAuthenticated: boolean
+    isAuthenticated: boolean,
+    percentage?: number
   ) => Resource[];
   getAvailableTags: (
     category: CategoryType,
@@ -54,6 +55,7 @@ export function useResources(options?: UseResourcesOptions): UseResourcesReturn 
     setError(null);
     try {
       const categoriesToLoad: CategoryType[] = [...CATEGORIES];
+      console.log('[useResources] Loading data with authToken:', authToken ? 'present' : 'none');
       const data = await fetchAllCategoriesData(categoriesToLoad, authToken);
 
       const mergedResources: Resource[] = [];
@@ -89,12 +91,12 @@ export function useResources(options?: UseResourcesOptions): UseResourcesReturn 
         }
       });
 
-      console.log(`Loaded ${mergedResources.length} resources across ${Object.keys(data).length} categories`);
+      console.log(`[useResources] Loaded ${mergedResources.length} resources across ${Object.keys(data).length} categories`);
       setResources(mergedResources);
       setFilters(mergedFilters);
       setError(null);
     } catch (err) {
-      console.error('Failed to load resources:', err);
+      console.error('[useResources] Failed to load resources:', err);
       setError('资源数据加载失败，请刷新页面重试');
       // Keep existing resources if available, don't clear them on error
     } finally {

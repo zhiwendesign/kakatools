@@ -19,7 +19,7 @@ interface AddResourceFormProps {
     imageUrl: string;
     link: string;
     featured: boolean;
-    contentType?: 'link' | 'document';
+    contentType?: 'link' | 'document' | 'image';
     content?: string;
   }) => Promise<void>;
   onBatchSave?: (resources: Array<{
@@ -31,7 +31,7 @@ interface AddResourceFormProps {
     imageUrl: string;
     link: string;
     featured: boolean;
-    contentType?: 'link' | 'document';
+    contentType?: 'link' | 'document' | 'image';
     content?: string;
   }>) => Promise<void>;
   onCancel: () => void;
