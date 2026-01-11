@@ -19,7 +19,7 @@ export const API_BASE_URL = getApiBaseUrl();
 
 // Data Sources - 使用数据库 API 端点
 export const DATA_SOURCES: Record<CategoryType, string> = {
-  AiCC: '/api/resources/AiCC',
+  AIGC: '/api/resources/AIGC',
   UXTips: '/api/resources/UXTips',
   Learning: '/api/resources/Learning',
   '星芒学社': '/api/resources/星芒学社',
@@ -28,7 +28,7 @@ export const DATA_SOURCES: Record<CategoryType, string> = {
 
 // Default Filters
 export const DEFAULT_FILTERS: FiltersMap = {
-  AiCC: [
+  AIGC: [
     { label: '全部', tag: 'All' },
     { label: '卡卡推荐', tag: '卡卡推荐' },
   ],
@@ -52,8 +52,8 @@ export const DEFAULT_FILTERS: FiltersMap = {
 
 // Category Descriptions
 export const CATEGORY_INFO: Record<CategoryType, { title: string; subtitle: string }> = {
-  AiCC: {
-    title: 'Al Creative Commons',
+  AIGC: {
+    title: '卡卡AI知识库',
     subtitle: '探索AI绘画模型和ComfyUI资料集合丨欢迎合作交流微信🛰️XingYueAIArt',
   },
   UXTips: {
@@ -91,7 +91,7 @@ export const STORAGE_KEYS = {
 export const DEFAULT_HEADER_CONFIG = {
   avatar: 'K',
   avatarImage: null,
-  title: 'Al Creative Commons',
+  title: '卡卡AI知识库',
 };
 
 // Category Constants

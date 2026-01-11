@@ -19,7 +19,7 @@ import {
 import { createResource, batchCreateResources, updateResource, deleteResource, addFilter, deleteFilter, login as apiLogin } from '@/lib/api';
 import { STORAGE_KEYS } from '@/constants';
 
-const CATEGORY_TABS: CategoryType[] = ['AiCC', 'UXTips', 'Learning', '星芒学社', '图库'];
+const CATEGORY_TABS: CategoryType[] = ['AIGC', 'UXTips', 'Learning', '星芒学社', '图库'];
 
 export default function ConfigPage() {
   const { isAuthenticated, token, login, logout, isLoading: authLoading } = useAuth();
@@ -35,7 +35,7 @@ export default function ConfigPage() {
   
   const { resources, filters, isLoading, setFilters, updateResource: localUpdateResource, addResource: localAddResource, deleteResource: localDeleteResource, reload: reloadResources } = useResources({ authToken: authToken || null });
 
-  const [activeTab, setActiveTab] = useState<CategoryType>('AiCC');
+  const [activeTab, setActiveTab] = useState<CategoryType>('AIGC');
   const [editorView, setEditorView] = useState<EditorViewType>('resource');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);

@@ -1,6 +1,6 @@
 /**
  * 批量生成测试数据脚本
- * 为每个分类（AiCC、UXTips、星芒学社、图库）生成30条数据
+ * 为每个分类（AIGC、UXTips、星芒学社、图库）生成30条数据
  * 
  * 使用方法: node generate-bulk-data.js
  */
@@ -11,7 +11,7 @@ const { resources } = require('./db');
 function generateId(category, index) {
   // 将分类名转换为有效的ID前缀
   const prefixMap = {
-    'AiCC': 'aicc',
+    'AIGC': 'aicc',
     'UXTips': 'uxtips',
     'Learning': 'learning',
     '星芒学社': 'star',
@@ -28,7 +28,7 @@ function getRandomImageUrl(index) {
   return `https://picsum.photos/id/${id}/600/400`;
 }
 
-// AiCC 分类数据模板
+// AIGC 分类数据模板
 const aiTemplates = [
   { title: 'ChatGPT', tags: ['LLM', 'Chat', 'OpenAI'], desc: 'OpenAI开发的强大对话AI助手，在文本生成和理解方面表现出色。' },
   { title: 'Claude', tags: ['LLM', 'Coding', 'Reasoning'], desc: 'Anthropic最新模型，在编程和推理任务中表现出色。' },
@@ -119,14 +119,14 @@ async function generateBulkData() {
   console.log('🚀 开始生成批量数据...\n');
 
   const allResources = [
-    ...generateResources('AiCC', aiTemplates, 30),
+    ...generateResources('AIGC', aiTemplates, 30),
     ...generateResources('UXTips', uxTemplates, 30),
     ...generateResources('星芒学社', starTemplates, 30),
     ...generateResources('图库', galleryTemplates, 30),
   ];
 
   console.log(`📊 准备导入 ${allResources.length} 条资源`);
-  console.log(`   - AiCC: 30 条`);
+  console.log(`   - AIGC: 30 条`);
   console.log(`   - UXTips: 30 条`);
   console.log(`   - 星芒学社: 30 条`);
   console.log(`   - 图库: 30 条\n`);

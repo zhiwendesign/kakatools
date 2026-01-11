@@ -37,7 +37,7 @@ interface AddResourceFormProps {
   onCancel: () => void;
 }
 
-const CATEGORY_OPTIONS: CategoryType[] = ['AiCC', 'UXTips', 'Learning', '星芒学社', '图库'];
+const CATEGORY_OPTIONS: CategoryType[] = ['AIGC', 'UXTips', 'Learning', '星芒学社', '图库'];
 
 export function AddResourceForm({ filters, onSave, onBatchSave, onCancel }: AddResourceFormProps) {
   const { token } = useAuth();
@@ -47,7 +47,7 @@ export function AddResourceForm({ filters, onSave, onBatchSave, onCancel }: AddR
     link: '',
     imageUrl: '',
     description: '',
-    category: 'AiCC' as CategoryType,
+    category: 'AIGC' as CategoryType,
     tags: [] as string[],
     featured: false,
     contentType: 'link' as 'link' | 'document' | 'image',

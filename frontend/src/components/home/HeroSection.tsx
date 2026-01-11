@@ -15,6 +15,7 @@ interface HeroSectionProps {
   setSelectedTagFilter: (tag: string) => void;
   filters: Record<CategoryType, Filter[]>;
   availableTags: string[];
+  categorySubtitles?: Record<string, string | null>;
 }
 
 export function HeroSection({
@@ -27,9 +28,13 @@ export function HeroSection({
   setSelectedTagFilter,
   filters,
   availableTags,
+  categorySubtitles,
 }: HeroSectionProps) {
   const categoryInfo = CATEGORY_INFO[activeCategory];
   const categoryFilters = filters[activeCategory] || DEFAULT_FILTERS[activeCategory] || [];
+  
+  // 优先使用后端配置的副标题，如果没有则使用默认值
+  const subtitle = categorySubtitles?.[activeCategory] || categoryInfo.subtitle;
 
   return (
     <div className="mb-8">
@@ -39,7 +44,7 @@ export function HeroSection({
             {categoryInfo.title}
           </h2>
           <p className="text-sm md:text-base text-secondary/90 max-w-2xl leading-relaxed">
-            {categoryInfo.subtitle}
+            {subtitle}
           </p>
         </div>
       </div>
@@ -96,11 +101,13 @@ export function HeroSection({
 
           {/* Search Box */}
           <div className="relative flex-1 md:w-64 group">
-            <Icon
-              name="Search"
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary group-focus-within:text-primary transition-colors"
-            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+              <Icon
+                name="Search"
+                size={14}
+                className="text-secondary group-focus-within:text-primary transition-colors"
+              />
+            </div>
             <input
               type="text"
               placeholder="搜索工具..."
@@ -111,7 +118,7 @@ export function HeroSection({
                   setActiveFilter('All');
                 }
               }}
-              className="w-full bg-white/90 backdrop-blur-sm border border-border/60 focus:bg-white focus:border-primary/40 rounded-lg pl-8 pr-10 py-1.5 text-xs focus:outline-none transition-all placeholder:text-secondary/60 shadow-sm hover:shadow focus:shadow-md"
+              className="w-full bg-white/90 backdrop-blur-sm border border-border/60 focus:bg-white focus:border-primary/40 rounded-lg pl-8 pr-10 py-1.5 text-xs focus:outline-none transition-all placeholder:text-secondary/60 shadow-sm hover:shadow focus:shadow-md relative z-0"
             />
             {searchQuery && (
               <button

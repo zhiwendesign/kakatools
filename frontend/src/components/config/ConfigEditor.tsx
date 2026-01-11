@@ -362,7 +362,7 @@ export function ConfigEditor({ resource, filters, onSave }: ConfigEditorProps) {
               className="w-full bg-white/90 backdrop-blur-sm border border-border/60 rounded-xl px-4 py-3 text-sm text-primary focus:bg-white focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all shadow-sm"
             >
               <option value="Learning">Learning（当前）</option>
-              <option value="AiCC">AiCC</option>
+              <option value="AIGC">AIGC</option>
               <option value="UXTips">UXTips</option>
               <option value="星芒学社">星芒学社</option>
               <option value="图库">图库</option>

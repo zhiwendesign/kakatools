@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { HeaderConfig as HeaderConfigType } from '@/types';
+import { HeaderConfig as HeaderConfigType, CategoryType } from '@/types';
 import { Button, Icon, Input } from '@/components/ui';
-import { fetchHeaderConfig, saveHeaderConfig } from '@/lib/api';
+import { fetchHeaderConfig } from '@/lib/api';
+import { CATEGORY_INFO, API_BASE_URL } from '@/constants';
 
 interface HeaderConfigProps {
   onSave: () => void;
@@ -14,10 +15,17 @@ export function HeaderConfig({ onSave, token }: HeaderConfigProps) {
   const [headerConfig, setHeaderConfig] = useState<HeaderConfigType>({
     avatar: 'K',
     avatarImage: null,
-    title: 'Al Creative Commons',
+    title: '卡卡AI知识库',
   });
   const [contactImage, setContactImage] = useState<string | null>(null);
   const [cooperationImage, setCooperationImage] = useState<string | null>(null);
+  const [categorySubtitles, setCategorySubtitles] = useState<Record<CategoryType, string>>({
+    AIGC: '',
+    UXTips: '',
+    Learning: '',
+    '星芒学社': '',
+    '图库': '',
+  });
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -30,10 +38,34 @@ export function HeaderConfig({ onSave, token }: HeaderConfigProps) {
           setHeaderConfig({
             avatar: response.config.avatar || 'K',
             avatarImage: response.config.avatarImage || null,
-            title: response.config.title || 'Al Creative Commons',
+            title: response.config.title || '卡卡AI知识库',
           });
           setContactImage(response.config.contactImage || null);
           setCooperationImage(response.config.cooperationImage || null);
+          // 加载分类副标题配置
+          // 如果后端返回了 categorySubtitles 对象，说明有配置过
+          // 对于每个分类：
+          //   - 如果值存在且不为 null，使用该值
+          //   - 如果值为 null，表示已设置为空，使用空字符串
+          //   - 如果键不存在（undefined），表示从未设置过，使用默认值
+          const subtitles = response.config.categorySubtitles || {};
+          setCategorySubtitles({
+            AIGC: subtitles.AIGC !== undefined 
+              ? (subtitles.AIGC || '') 
+              : CATEGORY_INFO.AIGC.subtitle,
+            UXTips: subtitles.UXTips !== undefined 
+              ? (subtitles.UXTips || '') 
+              : CATEGORY_INFO.UXTips.subtitle,
+            Learning: subtitles.Learning !== undefined 
+              ? (subtitles.Learning || '') 
+              : CATEGORY_INFO.Learning.subtitle,
+            '星芒学社': subtitles['星芒学社'] !== undefined 
+              ? (subtitles['星芒学社'] || '') 
+              : CATEGORY_INFO['星芒学社'].subtitle,
+            '图库': subtitles['图库'] !== undefined 
+              ? (subtitles['图库'] || '') 
+              : CATEGORY_INFO['图库'].subtitle,
+          });
         }
       } catch (error) {
         console.error('Failed to load header config:', error);
@@ -78,13 +110,33 @@ export function HeaderConfig({ onSave, token }: HeaderConfigProps) {
     setErrorMessage('');
 
     try {
-      const response = await saveHeaderConfig(token, {
-        avatar: headerConfig.avatar,
-        avatarImage: headerConfig.avatarImage,
-        title: headerConfig.title,
-        contactImage: contactImage,
-        cooperationImage: cooperationImage,
+      // 清理空字符串，转换为 null 或保留有效值
+      const cleanedCategorySubtitles: Record<string, string | null> = {};
+      Object.keys(categorySubtitles).forEach((key) => {
+        const value = categorySubtitles[key as CategoryType];
+        if (value && value.trim() !== '') {
+          cleanedCategorySubtitles[key] = value.trim();
+        } else {
+          cleanedCategorySubtitles[key] = null;
+        }
       });
+
+      // 直接调用 API，避免 Webpack 编译问题
+      const response = await fetch(`${API_BASE_URL}/api/config/header`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          avatar: headerConfig.avatar,
+          avatarImage: headerConfig.avatarImage,
+          title: headerConfig.title,
+          contactImage: contactImage,
+          cooperationImage: cooperationImage,
+          categorySubtitles: cleanedCategorySubtitles,
+        }),
+      }).then(res => res.json());
 
       if (response.success) {
         setSaveStatus('saved');
@@ -100,9 +152,10 @@ export function HeaderConfig({ onSave, token }: HeaderConfigProps) {
         setSaveStatus('error');
         setTimeout(() => setSaveStatus('idle'), 3000);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save header config:', error);
-      setErrorMessage('网络错误，请稍后重试');
+      const errorMessage = error?.message || error?.toString() || '网络错误，请稍后重试';
+      setErrorMessage(errorMessage);
       setSaveStatus('error');
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
@@ -187,7 +240,7 @@ export function HeaderConfig({ onSave, token }: HeaderConfigProps) {
           <Input
             value={headerConfig.title}
             onChange={(e) => setHeaderConfig((prev) => ({ ...prev, title: e.target.value }))}
-            placeholder="如: Al Creative Commons"
+            placeholder="如: 卡卡AI知识库"
           />
         </div>
 
@@ -276,6 +329,32 @@ export function HeaderConfig({ onSave, token }: HeaderConfigProps) {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Category Subtitles Config */}
+        <div className="bg-white rounded-lg p-6 border border-border">
+          <h4 className="text-sm font-medium text-primary mb-4">分类副标题配置</h4>
+          <p className="text-xs text-secondary mb-4">配置每个分类Tab下方的辅助标题（副标题）</p>
+          
+          <div className="space-y-4">
+            {(['AIGC', 'UXTips', 'Learning', '星芒学社', '图库'] as CategoryType[]).map((category) => (
+              <div key={category}>
+                <label className="block text-xs text-secondary mb-2">
+                  {category} 副标题
+                </label>
+                <Input
+                  type="text"
+                  value={categorySubtitles[category] || ''}
+                  onChange={(e) => setCategorySubtitles((prev) => ({
+                    ...prev,
+                    [category]: e.target.value,
+                  }))}
+                  placeholder={`如: ${CATEGORY_INFO[category].subtitle}`}
+                  className="text-sm"
+                />
+              </div>
+            ))}
           </div>
         </div>
 

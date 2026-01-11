@@ -14,10 +14,10 @@ interface ManageFiltersFormProps {
   onCancel: () => void;
 }
 
-const CATEGORY_OPTIONS: CategoryType[] = ['AiCC', 'UXTips', 'Learning', '星芒学社', '图库'];
+const CATEGORY_OPTIONS: CategoryType[] = ['AIGC', 'UXTips', 'Learning', '星芒学社', '图库'];
 
 export function ManageFiltersForm({ filters, resources = [], onAddFilter, onDeleteFilter, onCancel }: ManageFiltersFormProps) {
-  const [activeCategory, setActiveCategory] = useState<CategoryType>('AiCC');
+  const [activeCategory, setActiveCategory] = useState<CategoryType>('AIGC');
   const [newTagLabel, setNewTagLabel] = useState('');
   const [newTagValue, setNewTagValue] = useState('');
   const [isAdding, setIsAdding] = useState(false);

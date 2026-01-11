@@ -46,10 +46,11 @@ export default function HomePage() {
     headerConfig,
     contactImage,
     cooperationImage,
+    categorySubtitles,
   } = useHeaderConfig();
 
   // UI State
-  const [activeCategory, setActiveCategory] = useState<CategoryType>('AiCC');
+  const [activeCategory, setActiveCategory] = useState<CategoryType>('AIGC');
 
   // Check if user is logged in (either as admin or regular user)
   const isLoggedIn = isAuthenticated || starlightAccess;
@@ -71,7 +72,7 @@ export default function HomePage() {
       if (switchToCategory && CATEGORIES.includes(switchToCategory as CategoryType)) {
         const category = switchToCategory as CategoryType;
         if (isAdminOnlyCategory(category) && !hasAdminAccess) {
-          setActiveCategory('AiCC');
+          setActiveCategory('AIGC');
         } else {
           setActiveCategory(category);
         }
@@ -83,7 +84,7 @@ export default function HomePage() {
         if (categoryParam && CATEGORIES.includes(categoryParam as CategoryType)) {
           const category = categoryParam as CategoryType;
           if (isAdminOnlyCategory(category) && !hasAdminAccess) {
-            setActiveCategory('AiCC');
+            setActiveCategory('AIGC');
           } else {
             setActiveCategory(category);
           }
@@ -95,7 +96,7 @@ export default function HomePage() {
         if (event.detail && CATEGORIES.includes(event.detail as CategoryType)) {
           const category = event.detail as CategoryType;
           if (isAdminOnlyCategory(category) && !hasAdminAccess) {
-            setActiveCategory('AiCC');
+            setActiveCategory('AIGC');
           } else {
             setActiveCategory(category);
           }
@@ -131,10 +132,10 @@ export default function HomePage() {
     setSearchQuery('');
   }, [activeCategory]);
 
-  // If user logs out while viewing admin-only category, switch to AiCC
+  // If user logs out while viewing admin-only category, switch to AIGC
   useEffect(() => {
     if (isAdminOnlyCategory(activeCategory) && !hasAdminAccess) {
-      setActiveCategory('AiCC');
+      setActiveCategory('AIGC');
     }
   }, [hasAdminAccess, activeCategory]);
 
@@ -163,7 +164,7 @@ export default function HomePage() {
 
   // Get filtered resources
   // Visibility rules:
-  // - AiCC and UXTips: Always 100% visible (no login required)
+  // - AIGC and UXTips: Always 100% visible (no login required)
   // - 星芒学社 and 图库: 
   //   - Not logged in: 20%
   //   - Logged in with percentage setting: use setting
@@ -253,7 +254,7 @@ export default function HomePage() {
   // Handle user logout (regular user with key)
   const handleUserLogout = async () => {
     await revokeStarlightAccess();
-    setActiveCategory('AiCC');
+    setActiveCategory('AIGC');
   };
 
   // Handle logout
@@ -312,6 +313,7 @@ export default function HomePage() {
           setSelectedTagFilter={setSelectedTagFilter}
           filters={filters}
           availableTags={availableTags}
+          categorySubtitles={categorySubtitles}
         />
 
         <ResourceGrid

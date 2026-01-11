@@ -14,15 +14,15 @@ export function ConfigHeader({ isAuthenticated, onLogout }: ConfigHeaderProps) {
 
   const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    // 跳转到首页，并设置分类为 AiCC
+    // 跳转到首页，并设置分类为 AIGC
     router.push('/');
     // 使用 setTimeout 确保路由跳转完成后再设置分类
     setTimeout(() => {
       // 通过 sessionStorage 传递分类信息
       if (typeof window !== 'undefined') {
-        sessionStorage.setItem('switchToCategory', 'AiCC');
+        sessionStorage.setItem('switchToCategory', 'AIGC');
         // 触发自定义事件通知首页切换分类
-        window.dispatchEvent(new CustomEvent('switchCategory', { detail: 'AiCC' }));
+        window.dispatchEvent(new CustomEvent('switchCategory', { detail: 'AIGC' }));
       }
     }, 100);
   };

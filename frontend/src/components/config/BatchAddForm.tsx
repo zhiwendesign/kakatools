@@ -44,7 +44,7 @@ export function BatchAddForm({ filters, onSave, onCancel, showHeader = true }: B
   const [previewData, setPreviewData] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const validCategories: CategoryType[] = ['AiCC', 'UXTips', 'Learning', '星芒学社', '图库'];
+  const validCategories: CategoryType[] = ['AIGC', 'UXTips', 'Learning', '星芒学社', '图库'];
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -230,7 +230,7 @@ export function BatchAddForm({ filters, onSave, onCancel, showHeader = true }: B
     const templateData = [
       {
         标题: '示例资源1',
-        分类: 'AiCC',
+        分类: 'AIGC',
         描述: '这是一个示例资源的描述',
         标签: 'AI工具,免费',
         图片链接: 'https://example.com/image.jpg',
@@ -368,7 +368,7 @@ export function BatchAddForm({ filters, onSave, onCancel, showHeader = true }: B
               <ul className="list-disc list-inside space-y-1 text-xs text-blue-800">
                 <li><strong>必需列：</strong>标题、分类</li>
                 <li><strong>可选列：</strong>描述、标签（用逗号分隔）、图片链接、跳转链接、卡卡推荐（true/是/1）、内容类型（link/document/image）、文档内容或图片链接</li>
-                <li><strong>分类值：</strong>必须是 AiCC、UXTips、Learning、星芒学社、图库 之一</li>
+                <li><strong>分类值：</strong>必须是 AIGC、UXTips、Learning、星芒学社、图库 之一</li>
                 <li><strong>标签：</strong>多个标签用逗号或分号分隔</li>
               </ul>
             </div>

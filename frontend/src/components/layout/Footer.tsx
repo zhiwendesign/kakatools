@@ -7,9 +7,13 @@ interface FooterProps {
 export function Footer({ contactImage }: FooterProps) {
   return (
     <footer className="py-12 border-t border-border/40 bg-white/30 backdrop-blur-sm">
-      <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-secondary text-[11px] uppercase tracking-wider font-medium">
-        <p>&copy; {new Date().getFullYear()} AI Creative Commons.</p>
-        <div className="flex gap-6 mt-4 md:mt-0 items-center">
+      <div className="container mx-auto px-6">
+        <div className="flex flex-col md:flex-row justify-between items-center text-secondary text-[11px] uppercase tracking-wider font-medium">
+          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
+            <p>&copy;{new Date().getFullYear()} . Made by kkcomfy</p>
+            <p className="text-[10px] normal-case tracking-normal">冀ICP备2026000795</p>
+          </div>
+          <div className="flex gap-6 mt-4 md:mt-0 items-center">
           {/* Contact with hover image */}
           <div className="relative group">
             <span className="hover:text-primary transition-colors cursor-pointer">
@@ -46,6 +50,7 @@ export function Footer({ contactImage }: FooterProps) {
           >
             小红书
           </a>
+          </div>
         </div>
       </div>
     </footer>

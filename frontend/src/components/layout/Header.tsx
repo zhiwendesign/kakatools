@@ -40,7 +40,7 @@ export function Header({
   isLoggedIn,
 }: HeaderProps) {
   const allCategories: { id: CategoryType; label: string; icon: IconName; emoji: string; special?: boolean; adminOnly?: boolean; color?: string }[] = [
-    { id: 'AiCC', label: 'AiCC', icon: 'Bot', emoji: '🤖', color: 'text-blue-600' },
+    { id: 'AIGC', label: 'AIGC', icon: 'Bot', emoji: '🤖', color: 'text-blue-600' },
     { id: 'UXTips', label: 'UXTips', icon: 'Palette', emoji: '🎨', color: 'text-purple-600' },
     { id: 'Learning', label: 'Learning', icon: 'FileText', emoji: '📚', adminOnly: true, color: 'text-green-600' },
     { id: '星芒学社', label: '星芒学社', icon: 'Sparkles', emoji: '✨', special: true, color: 'text-amber-600' },
@@ -52,8 +52,8 @@ export function Header({
   
   // Filter categories based on user type:
   // - Admin (login or admin-type key): can see all categories including Learning
-  // - Regular user (with user-type key): can see AiCC, UXTips, 星芒学社, and 图库 (not Learning)
-  // - Guest: can see AiCC, UXTips, 星芒学社, and 图库 (but only 20% of content)
+  // - Regular user (with user-type key): can see AIGC, UXTips, 星芒学社, and 图库 (not Learning)
+  // - Guest: can see AIGC, UXTips, 星芒学社, and 图库 (but only 20% of content)
   const categories = allCategories.filter(cat => {
     if (cat.adminOnly || isAdminOnlyCategory(cat.id)) {
       return hasAdminAccess;
@@ -70,7 +70,7 @@ export function Header({
           className="flex items-center gap-3 cursor-pointer"
           onClick={(e) => {
             e.preventDefault();
-            setActiveCategory('AiCC');
+            setActiveCategory('AIGC');
           }}
         >
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-gray-900/10 overflow-hidden">

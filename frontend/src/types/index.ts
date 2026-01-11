@@ -23,9 +23,9 @@ export interface CategoryData {
 }
 
 // Category Types
-export type CategoryType = 'AiCC' | 'UXTips' | 'Learning' | '星芒学社' | '图库';
+export type CategoryType = 'AIGC' | 'UXTips' | 'Learning' | '星芒学社' | '图库';
 
-export const CATEGORIES: CategoryType[] = ['AiCC', 'UXTips', 'Learning', '星芒学社', '图库'];
+export const CATEGORIES: CategoryType[] = ['AIGC', 'UXTips', 'Learning', '星芒学社', '图库'];
 
 // Auth Types
 export interface AuthState {

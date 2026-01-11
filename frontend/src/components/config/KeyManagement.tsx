@@ -253,7 +253,7 @@ export function KeyManagement({ isAuthenticated, onTokenRequired }: KeyManagemen
                 onChange={(e) => setUserType(e.target.value as 'user' | 'admin')}
                 className="w-full bg-white/80 backdrop-blur-sm border border-border/60 focus:bg-white focus:border-primary/30 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all text-primary shadow-sm"
               >
-                <option value="user">普通用户 - 可访问：AiCC、UXTips、星芒学社、图库</option>
+                <option value="user">普通用户 - 可访问：AIGC、UXTips、星芒学社、图库</option>
                 <option value="admin">管理员 - 可访问：Learning、星芒学社</option>
               </select>
             </div>

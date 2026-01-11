@@ -10,7 +10,7 @@ const path = require('path');
 
 // 示例数据
 const SAMPLE_DATA = {
-  AiCC: {
+  AIGC: {
     filters: [
       { label: '全部', tag: 'All' },
       { label: '卡卡推荐', tag: '卡卡推荐' },

@@ -814,7 +814,7 @@ app.post('/api/resources/batch', requireAuth, (req, res, next) => {
         }
 
         // 验证分类是否有效
-        const validCategories = ['AiCC', 'UXTips', 'Learning', '星芒学社', '图库'];
+        const validCategories = ['AIGC', 'UXTips', 'Learning', '星芒学社', '图库'];
         if (!validCategories.includes(resource.category)) {
           results.failed++;
           results.errors.push({
@@ -961,7 +961,7 @@ app.get('/api/config/header', (req, res, next) => {
   try {
     const avatar = adminSettings.get('header_avatar') || 'K';
     const avatarImageRaw = adminSettings.get('header_avatar_image');
-    const title = adminSettings.get('header_title') || 'Al Creative Commons';
+    const title = adminSettings.get('header_title') || '卡卡AI知识库';
     const contactImageRaw = adminSettings.get('contact_image');
     const cooperationImageRaw = adminSettings.get('cooperation_image');
     
@@ -969,6 +969,28 @@ app.get('/api/config/header', (req, res, next) => {
     const avatarImage = avatarImageRaw && avatarImageRaw.trim() !== '' ? avatarImageRaw : null;
     const contactImage = contactImageRaw && contactImageRaw.trim() !== '' ? contactImageRaw : null;
     const cooperationImage = cooperationImageRaw && cooperationImageRaw.trim() !== '' ? cooperationImageRaw : null;
+    
+    // 获取分类副标题配置
+    // adminSettings.get() 在键不存在时返回 null，所以需要检查数据库是否存在该键
+    const categorySubtitles = {};
+    const validCategories = ['AIGC', 'UXTips', 'Learning', '星芒学社', '图库'];
+    
+    // 需要访问 db 来检查键是否存在
+    const { db } = require('./db');
+    
+    // 检查每个分类是否在数据库中存在
+    validCategories.forEach(category => {
+      const key = `category_subtitle_${category}`;
+      // 使用 SELECT EXISTS 检查键是否存在
+      const exists = db.prepare('SELECT EXISTS(SELECT 1 FROM admin_settings WHERE key = ?) as exists').get(key);
+      if (exists && exists.exists) {
+        // 键存在，获取值
+        const value = adminSettings.get(key);
+        // 如果值不为空，使用该值；如果为空字符串，返回 null 表示已设置为空
+        categorySubtitles[category] = (value && value.trim() !== '') ? value : null;
+      }
+      // 如果键不存在，不添加到 categorySubtitles 对象中（undefined）
+    });
     
     res.json({
       success: true,
@@ -978,6 +1000,7 @@ app.get('/api/config/header', (req, res, next) => {
         title,
         contactImage,
         cooperationImage,
+        categorySubtitles: categorySubtitles,
       }
     });
   } catch (error) {
@@ -988,7 +1011,14 @@ app.get('/api/config/header', (req, res, next) => {
 // Save header config (Admin Only)
 app.post('/api/config/header', requireAuth, (req, res, next) => {
   try {
-    const { avatar, avatarImage, title, contactImage, cooperationImage } = req.body;
+    const { avatar, avatarImage, title, contactImage, cooperationImage, categorySubtitles } = req.body;
+    
+    logger.debug('Saving header config', { 
+      hasAvatar: !!avatar, 
+      hasTitle: !!title, 
+      hasCategorySubtitles: !!categorySubtitles,
+      categorySubtitlesType: typeof categorySubtitles
+    });
     
     // 验证必填字段
     if (!avatar || !title) {
@@ -1018,7 +1048,51 @@ app.post('/api/config/header', requireAuth, (req, res, next) => {
       adminSettings.set('cooperation_image', '');
     }
     
+    // 保存分类副标题配置
+    if (categorySubtitles && typeof categorySubtitles === 'object') {
+      try {
+        const validCategories = ['AIGC', 'UXTips', 'Learning', '星芒学社', '图库'];
+        validCategories.forEach(category => {
+          const key = `category_subtitle_${category}`;
+          const value = categorySubtitles[category];
+          
+          if (value !== undefined && value !== null) {
+            // 确保值是字符串类型
+            const subtitle = typeof value === 'string' ? value.trim() : String(value).trim();
+            if (subtitle !== '') {
+              adminSettings.set(key, subtitle);
+              logger.debug(`Saved subtitle for ${category}: ${subtitle.substring(0, 50)}...`);
+            } else {
+              adminSettings.set(key, '');
+            }
+          } else {
+            // 如果值为 null 或 undefined，删除配置
+            adminSettings.set(key, '');
+          }
+        });
+      } catch (subtitleError) {
+        logger.error('Error saving category subtitles', { error: subtitleError, categorySubtitles });
+        // 不中断整个保存流程，只记录错误
+      }
+    }
+    
     logger.info('Header config updated', { avatar, title });
+    
+    // 重新获取配置以返回最新值
+    const updatedCategorySubtitles = {
+      AIGC: adminSettings.get('category_subtitle_AIGC') || null,
+      UXTips: adminSettings.get('category_subtitle_UXTips') || null,
+      Learning: adminSettings.get('category_subtitle_Learning') || null,
+      '星芒学社': adminSettings.get('category_subtitle_星芒学社') || null,
+      '图库': adminSettings.get('category_subtitle_图库') || null,
+    };
+    
+    // 清理空字符串
+    Object.keys(updatedCategorySubtitles).forEach(key => {
+      if (updatedCategorySubtitles[key] === '') {
+        updatedCategorySubtitles[key] = null;
+      }
+    });
     
     res.json({
       success: true,
@@ -1029,6 +1103,7 @@ app.post('/api/config/header', requireAuth, (req, res, next) => {
         title,
         contactImage: contactImage || null,
         cooperationImage: cooperationImage || null,
+        categorySubtitles: updatedCategorySubtitles,
       }
     });
   } catch (error) {

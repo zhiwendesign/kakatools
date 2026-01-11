@@ -160,7 +160,7 @@ export function isPercentageControlledCategory(category: CategoryType): boolean 
  * @returns The visibility percentage, or undefined if not applicable (means 100%)
  * 
  * Rules:
- * - AiCC and UXTips: Always return undefined (100% visible, no login required)
+ * - AIGC and UXTips: Always return undefined (100% visible, no login required)
  * - 星芒学社 and 图库:
  *   - Not logged in: 20%
  *   - Logged in with keyPercentage: use keyPercentage
@@ -171,7 +171,7 @@ export function getVisibilityPercentage(
   keyPercentage: number | undefined,
   isLoggedIn: boolean
 ): number | undefined {
-  // AiCC and UXTips are always fully visible (no percentage control)
+  // AIGC and UXTips are always fully visible (no percentage control)
   if (!isPercentageControlledCategory(category)) {
     return undefined; // 100% visible
   }

@@ -1,5 +1,5 @@
 module.exports = {
-  AiCC: {
+  AIGC: {
     filters: [
       { label: '全部', tag: 'All' },
       { label: '卡卡推荐', tag: '卡卡推荐' },

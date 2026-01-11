@@ -157,7 +157,7 @@ export function LoginModal({ isOpen, onClose, onAdminLogin, onUserLogin }: Login
               autoComplete="off"
             />
             <p className="text-xs text-secondary text-center mt-2">
-              请输入您的访问密钥以查看 AiCC、UXTips、星芒学社 和 图库 内容
+              请输入您的访问密钥以查看 AIGC、UXTips、星芒学社 和 图库 内容
             </p>
             <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-xs text-yellow-800 flex items-start gap-2">

@@ -9,6 +9,7 @@ interface UseHeaderConfigReturn {
   headerConfig: HeaderConfig;
   contactImage: string | null;
   cooperationImage: string | null;
+  categorySubtitles: Record<string, string | null>;
   updateHeaderConfig: (updates: Partial<HeaderConfig>) => void;
   saveHeaderConfig: () => void;
   setContactImage: (image: string | null) => void;
@@ -22,6 +23,7 @@ export function useHeaderConfig(): UseHeaderConfigReturn {
   const [headerConfig, setHeaderConfig] = useState<HeaderConfig>(DEFAULT_HEADER_CONFIG);
   const [contactImage, setContactImage] = useState<string | null>(null);
   const [cooperationImage, setCooperationImage] = useState<string | null>(null);
+  const [categorySubtitles, setCategorySubtitles] = useState<Record<string, string | null>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   // Load from backend API on mount
@@ -37,6 +39,7 @@ export function useHeaderConfig(): UseHeaderConfigReturn {
         });
         setContactImage(response.config.contactImage || null);
         setCooperationImage(response.config.cooperationImage || null);
+        setCategorySubtitles(response.config.categorySubtitles || {});
       }
     } catch (error) {
       console.error('Failed to load header config:', error);
@@ -81,6 +84,7 @@ export function useHeaderConfig(): UseHeaderConfigReturn {
     headerConfig,
     contactImage,
     cooperationImage,
+    categorySubtitles,
     updateHeaderConfig,
     saveHeaderConfig,
     setContactImage,

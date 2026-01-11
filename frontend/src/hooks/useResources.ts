@@ -149,7 +149,7 @@ export function useResources(options?: UseResourcesOptions): UseResourcesReturn 
       let items = resources.filter((item) => item.category === category);
       
       // Apply percentage limit for percentage-controlled categories (星芒学社 and 图库)
-      // Note: AiCC and UXTips always pass undefined (100% visible)
+      // Note: AIGC and UXTips always pass undefined (100% visible)
       // Only 星芒学社 and 图库 can have percentage restrictions
       if (percentage !== undefined && percentage < 100) {
         const totalCount = items.length;
