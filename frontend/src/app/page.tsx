@@ -32,15 +32,6 @@ export default function HomePage() {
     reload: reloadResources,
   } = useResources({ authToken: isAuthenticated ? token : null });
 
-  // Reload resources when authentication state or token changes
-  useEffect(() => {
-    // Delay reload to ensure token is properly set
-    const timer = setTimeout(() => {
-      reloadResources();
-    }, 50);
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, token, reloadResources]);
-
   // Header config hook
   const {
     headerConfig,
@@ -155,7 +146,7 @@ export default function HomePage() {
 
   // Reload resources when authentication state or token changes
   useEffect(() => {
-    // Small delay to ensure token is stored before reloading
+    // Small delay to ensure token is properly set
     const timer = setTimeout(() => {
       reloadResources();
     }, 100);

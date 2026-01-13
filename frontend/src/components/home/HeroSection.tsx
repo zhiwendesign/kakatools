@@ -28,13 +28,13 @@ export function HeroSection({
   setSelectedTagFilter,
   filters,
   availableTags,
-  categorySubtitles,
+  categorySubtitles = {},
 }: HeroSectionProps) {
   const categoryInfo = CATEGORY_INFO[activeCategory];
   const categoryFilters = filters[activeCategory] || DEFAULT_FILTERS[activeCategory] || [];
   
-  // 优先使用后端配置的副标题，如果没有则使用默认值
-  const subtitle = categorySubtitles?.[activeCategory] || categoryInfo.subtitle;
+  // 使用配置的副标题，如果没有则使用默认副标题
+  const subtitle = categorySubtitles[activeCategory] || categoryInfo.subtitle;
 
   return (
     <div className="mb-8">

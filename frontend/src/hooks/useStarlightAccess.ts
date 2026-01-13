@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { logout as apiLogout, verifyToken } from '@/lib/api';
+import { logout as apiLogout, verifyAccessKey } from '@/lib/api';
 import { STORAGE_KEYS } from '@/constants';
 import { AccessKeyInfo } from '@/types';
 import {
@@ -25,7 +25,7 @@ export function useStarlightAccess(): UseStarlightAccessReturn {
   const [keyInfo, setKeyInfo] = useState<AccessKeyInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check stored access on mount - verify with backend
+  // Check stored access on mount - verify with backend - only once
   useEffect(() => {
     const checkAccess = async () => {
       const storedToken = getStorageItem(STORAGE_KEYS.STARLIGHT_TOKEN);
@@ -40,29 +40,11 @@ export function useStarlightAccess(): UseStarlightAccessReturn {
           // Key expired locally, clean up
           removeStorageItem(STORAGE_KEYS.STARLIGHT_TOKEN);
           removeStorageItem(STORAGE_KEYS.STARLIGHT_KEY_INFO);
-          setIsLoading(false);
-          return;
-        }
-
-        // Verify token with backend for security
-        try {
-          const result = await verifyToken(storedToken);
-          if (result.success) {
-            // If backend returns updated keyInfo, use it (to ensure userType is correct)
-            const updatedKeyInfo = (result as any).keyInfo || storedKeyInfo;
-            setStorageJSON(STORAGE_KEYS.STARLIGHT_KEY_INFO, updatedKeyInfo);
-            setHasAccess(true);
-            setKeyInfo(updatedKeyInfo);
-          } else {
-            // Token invalid on backend, clean up
-            removeStorageItem(STORAGE_KEYS.STARLIGHT_TOKEN);
-            removeStorageItem(STORAGE_KEYS.STARLIGHT_KEY_INFO);
-          }
-        } catch {
-          // Network error - allow access based on local data for offline support
-          // but this is a security trade-off
-          removeStorageItem(STORAGE_KEYS.STARLIGHT_TOKEN);
-          removeStorageItem(STORAGE_KEYS.STARLIGHT_KEY_INFO);
+        } else {
+          // Don't verify with backend - use local storage data
+          // This prevents infinite loops and reduces server load
+          setHasAccess(true);
+          setKeyInfo(storedKeyInfo);
         }
       }
 

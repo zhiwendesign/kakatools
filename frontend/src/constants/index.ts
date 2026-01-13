@@ -97,8 +97,6 @@ export const DEFAULT_HEADER_CONFIG = {
 // Category Constants
 export const ADMIN_ONLY_CATEGORIES: CategoryType[] = ['Learning'];
 export const PERCENTAGE_CONTROLLED_CATEGORIES: CategoryType[] = ['星芒学社', '图库'];
-export const DEFAULT_GUEST_PERCENTAGE = 20;
-
-// Percentage Options
+export const DEFAULT_GUEST_PERCENTAGE = 20;// Percentage Options
 export const PERCENTAGE_OPTIONS = [20, 50, 100] as const;
 export type PercentageOption = typeof PERCENTAGE_OPTIONS[number];

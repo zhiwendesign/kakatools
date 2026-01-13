@@ -150,9 +150,7 @@ export function isAdminOnlyCategory(category: CategoryType): boolean {
  */
 export function isPercentageControlledCategory(category: CategoryType): boolean {
   return PERCENTAGE_CONTROLLED_CATEGORIES.includes(category);
-}
-
-/**
+}/**
  * Calculate visibility percentage for a category
  * @param category - The category to check
  * @param keyPercentage - Percentage from access key (if logged in)

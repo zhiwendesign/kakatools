@@ -11,7 +11,16 @@ export function Footer({ contactImage }: FooterProps) {
         <div className="flex flex-col md:flex-row justify-between items-center text-secondary text-[11px] uppercase tracking-wider font-medium">
           <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
             <p>&copy;{new Date().getFullYear()} . Made by kkcomfy</p>
-            <p className="text-[10px] normal-case tracking-normal">冀ICP备2026000795</p>
+            <p className="text-[10px] normal-case tracking-normal">
+              <a 
+                href="https://beian.miit.gov.cn" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                冀ICP备2026000795号
+              </a>
+            </p>
           </div>
           <div className="flex gap-6 mt-4 md:mt-0 items-center">
           {/* Contact with hover image */}

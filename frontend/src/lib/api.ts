@@ -241,6 +241,8 @@ export async function createResource(
     imageUrl?: string;
     link?: string;
     featured?: boolean;
+    contentType?: 'link' | 'document' | 'image';
+    content?: string;
   }
 ): Promise<{ success: boolean; resource?: any; message?: string }> {
   const response = await fetch(`${API_BASE_URL}/api/resources`, {
@@ -266,6 +268,8 @@ export async function updateResource(
     imageUrl?: string;
     link?: string;
     featured?: boolean;
+    contentType?: 'link' | 'document' | 'image';
+    content?: string;
   }
 ): Promise<{ success: boolean; resource?: any; message?: string }> {
   const response = await fetch(`${API_BASE_URL}/api/resources`, {
@@ -303,7 +307,7 @@ export async function batchCreateResources(
     imageUrl?: string;
     link?: string;
     featured?: boolean;
-    contentType?: 'link' | 'document';
+    contentType?: 'link' | 'document' | 'image';
     content?: string;
   }>
 ): Promise<{ 
@@ -360,6 +364,46 @@ export async function deleteFilter(
       headers: { Authorization: `Bearer ${token}` },
     }
   );
+  
+  return response.json();
+}
+
+// ==================== Header Config API ====================
+
+export async function fetchHeaderConfig(): Promise<{
+  success: boolean;
+  config?: {
+    avatar?: string;
+    avatarImage?: string | null;
+    title?: string;
+    contactImage?: string | null;
+    cooperationImage?: string | null;
+    categorySubtitles?: Record<string, string | null>;
+  };
+}> {
+  const response = await fetch(`${API_BASE_URL}/api/config/header`);
+  return response.json();
+}
+
+export async function saveHeaderConfig(
+  token: string,
+  config: {
+    avatar?: string;
+    avatarImage?: string | null;
+    title?: string;
+    contactImage?: string | null;
+    cooperationImage?: string | null;
+    categorySubtitles?: Record<string, string | null>;
+  }
+): Promise<{ success: boolean; message?: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/config/header`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(config),
+  });
   
   return response.json();
 }
